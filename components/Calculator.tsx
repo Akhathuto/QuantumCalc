@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { HistoryEntry, Explanation } from '../types';
 import { getFormulaExplanation } from '../services/geminiService';
@@ -34,6 +33,34 @@ const SCIENTIFIC_CONSTANTS = [
     { name: 'Golden Ratio (φ)', value: '1.61803398875', symbol: 'φ', unit: '' },
 ];
 
+const LatexRenderer: React.FC<{ latex: string }> = React.memo(({ latex }) => {
+  // A simple parser for basic LaTeX syntax
+  const parts = latex.split(/(\^\{.*?\}|\_\{.*?\}|\\sqrt\{.*?\}|\\[a-zA-Z]+)/g).filter(Boolean);
+
+  const renderPart = (part: string, index: number) => {
+    if (part.startsWith('^{')) {
+      return <sup key={index}>{part.substring(2, part.length - 1)}</sup>;
+    }
+    if (part.startsWith('_{')) {
+      return <sub key={index}>{part.substring(2, part.length - 1)}</sub>;
+    }
+    if (part.startsWith('\\sqrt{')) {
+        return <span key={index}>&radic;({part.substring(6, part.length - 1)})</span>;
+    }
+    const symbols: Record<string, string> = {
+        '\\theta': 'θ', '\\pi': 'π', '\\phi': 'φ', '\\Delta': 'Δ', '\\pm': '±', '\\times': '×', '\\div': '÷',
+    };
+    if (symbols[part]) {
+        return <span key={index}>{symbols[part]}</span>;
+    }
+    
+    return <span key={index}>{part}</span>;
+  };
+
+  return <>{parts.map(renderPart)}</>;
+});
+
+
 const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad, onExpressionLoaded }) => {
   const [expression, setExpression] = useState('');
   const [displayValue, setDisplayValue] = useState('0');
@@ -54,7 +81,6 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     p.set('radToDeg', (angle: number) => angle * 180 / Math.PI);
     p.set('radToGrad', (angle: number) => angle * 200 / Math.PI);
 
-    // Clear previous definitions
     p.evaluate('sin(x)=sin(x)');
     p.evaluate('cos(x)=cos(x)');
     p.evaluate('tan(x)=tan(x)');
@@ -96,7 +122,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
 
   const handleInput = useCallback((value: string) => {
     setError(null);
-    if (result !== null) { // Start new calculation after '='
+    if (result !== null) { 
         setExpression(value);
         setDisplayValue(value);
         setResult(null);
@@ -149,16 +175,10 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
   const calculate = useCallback(async () => {
     if (error || isLoading) return;
     
-    let exprToEvaluate = displayValue;
-    if (expression && displayValue.match(/^[0-9.]+$/) && !['+', '−', '×', '÷', '%'].some(op => expression.endsWith(op))) {
-        exprToEvaluate = expression + displayValue;
-    } else {
-        setExpression(displayValue);
-    }
-    
+    setExpression(displayValue);
     setError(null);
     try {
-      const sanitizedExpression = exprToEvaluate
+      const sanitizedExpression = displayValue
         .replace(/π/g, 'pi')
         .replace(/√/g, 'sqrt')
         .replace(/∛/g, 'cbrt')
@@ -169,7 +189,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
       const evalResult = parser.evaluate(sanitizedExpression);
       const resultStr = String(parseFloat(evalResult.toFixed(10)));
       
-      const newHistoryEntry = { expression: exprToEvaluate, result: resultStr, timestamp: new Date().toISOString() };
+      const newHistoryEntry = { expression: displayValue, result: resultStr, timestamp: new Date().toISOString() };
       addToHistory(newHistoryEntry);
       setTickerHistory(prev => [newHistoryEntry, ...prev].slice(0, 5));
       setResult(resultStr);
@@ -185,7 +205,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
       setIsLoading(false);
       setIsSecond(false);
     }
-  }, [displayValue, expression, error, isLoading, addToHistory, parser]);
+  }, [displayValue, error, isLoading, addToHistory, parser]);
 
   const memoryClear = () => { setMemory(null); showToast("Memory cleared"); };
   const memoryRecall = () => { if(memory !== null) { setDisplayValue(String(memory)); setResult(null); } };
@@ -214,11 +234,9 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
   const handleOp = (op: string) => {
     setError(null);
     if (result !== null) {
-      setExpression(result + op);
       setDisplayValue(result + op);
       setResult(null);
     } else {
-      setExpression(displayValue + op);
       setDisplayValue(displayValue + op);
     }
   };
@@ -232,6 +250,14 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
         case 'num': return 'bg-brand-surface hover:bg-gray-600 text-brand-text';
         case 'func':
         default: return 'bg-brand-primary/80 hover:bg-brand-primary text-white';
+    }
+  };
+  
+  const getColSpanClass = (span?: number) => {
+    switch(span) {
+        case 2: return 'col-span-2';
+        case 3: return 'col-span-3';
+        default: return 'col-span-1';
     }
   };
 
@@ -305,7 +331,6 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
             <div className="bg-gray-900/50 rounded-lg p-4 mb-4 text-right min-h-[160px] flex flex-col justify-between relative border border-brand-border">
-              {/* Ticker Tape History */}
               <div className="h-16 overflow-y-auto text-right text-sm text-brand-text-secondary pr-1">
                   {tickerHistory.map((item, index) => (
                       <div key={index} className="opacity-70">
@@ -315,14 +340,13 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
                   ))}
               </div>
 
-              {/* Main Display */}
               <div className="border-t border-brand-border/50 pt-2">
                   <div className="absolute top-2 left-3 flex items-center gap-4 text-xs font-bold z-10">
                       {isSecond && <span className="bg-yellow-500 text-black px-1.5 py-0.5 rounded">2nd</span>}
                       <span className="text-brand-primary">{angleMode.toUpperCase()}</span>
                       {memory !== null && <span className="text-teal-400">M</span>}
                   </div>
-                  <div className="text-brand-text-secondary text-xl break-words h-7 overflow-x-auto text-right font-mono">{expression}</div>
+                  <div className="text-brand-text-secondary text-xl break-words h-7 overflow-x-auto text-right font-mono">{result ? expression : ' '}</div>
                   <div className="text-4xl font-bold text-brand-text break-words h-12 overflow-x-auto text-right font-mono">
                       {result ?? displayValue}
                   </div>
@@ -332,7 +356,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
           
            <div className="grid grid-cols-5 gap-2">
             {buttonGrid.flat().map((b, index) => (
-                <div key={index} className={b.colSpan ? `col-span-${b.colSpan}` : 'col-span-1'}>
+                <div key={index} className={getColSpanClass(b.colSpan)}>
                     <Button
                         onClick={isSecond && b.secondAction ? b.secondAction : b.action}
                         className={`${getStyle(b.style, b.active)} h-12 text-base w-full`}
@@ -353,13 +377,60 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
         </div>
         
         <div className="lg:col-span-2 space-y-6">
-            <div className="bg-brand-surface/50 p-6 rounded-lg">
-                <h3 className="text-2xl font-bold mb-4 flex items-center gap-2 text-brand-primary"><Brain /> Formula Explorer</h3>
-                <div className="min-h-[200px] relative">
-                    {isLoading && <div className="absolute inset-0 flex flex-col items-center justify-center bg-brand-surface/50 rounded-lg"><Loader className="animate-spin text-brand-primary" size={48} /><p className="mt-4 text-brand-text-secondary">Gemini is thinking...</p></div>}
-                    {!isLoading && !error && explanation && <div className="space-y-4"><h4 className="text-xl font-semibold text-brand-accent">{explanation.functionName}</h4><div><p className="font-mono bg-brand-bg p-3 rounded-md text-brand-secondary break-words">{explanation.formula}</p></div><p className="text-brand-text-secondary">{explanation.description}</p><div><p className="font-semibold">Example:</p><p className="text-brand-text-secondary italic">{explanation.example}</p></div></div>}
-                    {!isLoading && !error && !explanation && <div className="text-center text-brand-text-secondary pt-16"><p>Perform a calculation to see a formula explanation here.</p></div>}
-                </div>
+            <div className="bg-brand-surface/50 p-6 rounded-lg min-h-[400px] flex flex-col">
+              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2 text-brand-primary">
+                <Brain /> Formula Explorer
+              </h3>
+              <div className="flex-grow relative">
+                {isLoading && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-brand-surface/50 rounded-lg transition-opacity duration-300">
+                    <Loader className="animate-spin text-brand-primary" size={48} />
+                    <p className="mt-4 text-brand-text-secondary">Gemini is exploring...</p>
+                  </div>
+                )}
+
+                {!isLoading && !explanation && (
+                  <div className="flex flex-col items-center justify-center h-full text-center text-brand-text-secondary">
+                      <FlaskConical size={48} className="mb-4 opacity-50" />
+                      <p className="font-semibold">Unlock knowledge with every calculation.</p>
+                      <p className="text-sm">Perform a calculation using a scientific function (like sqrt, sin, log) to see a detailed explanation here.</p>
+                  </div>
+                )}
+
+                {!isLoading && explanation && (
+                  <div className="space-y-4 animate-fade-in-down">
+                    <h4 className="text-xl font-semibold text-brand-accent">{explanation.functionName}</h4>
+                    
+                    <div className="font-mono bg-brand-bg p-4 rounded-md text-2xl text-center text-brand-secondary break-words">
+                      <LatexRenderer latex={explanation.latexFormula || explanation.formula} />
+                    </div>
+
+                    {explanation.parameters && explanation.parameters.length > 0 && (
+                      <div>
+                        <h5 className="font-semibold mb-2">Parameters:</h5>
+                        <div className="space-y-2 text-sm">
+                          {explanation.parameters.map(p => (
+                            <div key={p.param} className="flex">
+                              <code className="font-bold text-brand-secondary w-12 flex-shrink-0">{p.param}</code>
+                              <span className="text-brand-text-secondary">{p.description}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <h5 className="font-semibold mb-2">Description:</h5>
+                      <p className="text-brand-text-secondary text-sm">{explanation.description}</p>
+                    </div>
+
+                    <div>
+                      <h5 className="font-semibold mb-2">Example:</h5>
+                      <p className="font-mono text-brand-text-secondary italic bg-brand-bg p-2 rounded-md text-sm">{explanation.example}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="bg-brand-surface/50 p-6 rounded-lg">
                 <h3 className="text-2xl font-bold mb-4 flex items-center gap-2 text-brand-primary"><FlaskConical /> Scientific Constants</h3>

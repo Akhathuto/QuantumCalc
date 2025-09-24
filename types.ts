@@ -1,4 +1,3 @@
-
 export interface HistoryEntry {
   expression: string;
   result: string;
@@ -8,7 +7,12 @@ export interface HistoryEntry {
 export interface Explanation {
   functionName: string;
   formula: string;
+  latexFormula?: string;
   description: string;
+  parameters?: {
+    param: string;
+    description: string;
+  }[];
   example: string;
 }
 

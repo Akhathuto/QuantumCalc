@@ -85,8 +85,8 @@ const FunctionPlotter: React.FC = () => {
                     <Input id="function_expr" label="Function y = f(x)" type="text" value={expression} onChange={e => setExpression(e.target.value)} placeholder="e.g., sin(x)" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                    <Input id="function_xmin" label="X Min" type="number" value={xMin} onChange={e => setXMin(e.target.value)} />
-                    <Input id="function_xmax" label="X Max" type="number" value={xMax} onChange={e => setXMax(e.target.value)} />
+                    <Input id="function_xmin" label="X Min" type="text" value={xMin} onChange={e => setXMin(e.target.value)} />
+                    <Input id="function_xmax" label="X Max" type="text" value={xMax} onChange={e => setXMax(e.target.value)} />
                 </div>
             </div>
             <ErrorDisplay error={error} />

@@ -89,6 +89,71 @@ const LoanCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     );
 };
 
+const CompoundInterestCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+    const [principal, setPrincipal] = useState('1000');
+    const [contribution, setContribution] = useState('100');
+    const [rate, setRate] = useState('7');
+    const [term, setTerm] = useState('10');
+    const [frequency, setFrequency] = useState('12'); // Monthly
+
+    const result = useMemo(() => {
+        const P = parseFloat(principal);
+        const PMT = parseFloat(contribution);
+        const r = parseFloat(rate) / 100;
+        const t = parseInt(term);
+        const n = parseInt(frequency);
+
+        if (isNaN(P) || isNaN(PMT) || isNaN(r) || isNaN(t) || isNaN(n) || t <= 0 || n <= 0) return null;
+
+        let futureValue;
+        const totalPeriods = n * t;
+
+        if (r === 0) {
+            futureValue = P + PMT * totalPeriods;
+        } else {
+            const ratePerPeriod = r / n;
+            const principalGrowth = P * Math.pow(1 + ratePerPeriod, totalPeriods);
+            const contributionGrowth = PMT * ((Math.pow(1 + ratePerPeriod, totalPeriods) - 1) / ratePerPeriod);
+            futureValue = principalGrowth + contributionGrowth;
+        }
+        
+        const totalContributions = P + (PMT * totalPeriods);
+        const totalInterest = futureValue - totalContributions;
+        
+        return { futureValue, totalContributions, totalInterest };
+
+    }, [principal, contribution, rate, term, frequency]);
+    
+    const currencySymbol = new Intl.NumberFormat(undefined, { style: 'currency', currency }).formatToParts(1).find(p => p.type === 'currency')?.value;
+
+    return (
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <div className="space-y-4 bg-brand-bg/30 p-4 rounded-lg">
+                <h3 className="text-xl font-bold mb-2">Investment Details</h3>
+                <InputField label="Initial Principal" id="ci-principal" type="number" value={principal} onChange={e => setPrincipal(e.target.value)} currencySymbol={currencySymbol} />
+                <InputField label="Periodic Contribution" id="ci-contribution" type="number" value={contribution} onChange={e => setContribution(e.target.value)} currencySymbol={currencySymbol} />
+                <InputField label="Annual Interest Rate (%)" id="ci-rate" type="number" value={rate} onChange={e => setRate(e.target.value)} />
+                <InputField label="Investment Term (Years)" id="ci-term" type="number" value={term} onChange={e => setTerm(e.target.value)} />
+                <div>
+                  <label htmlFor="ci-frequency" className="block text-sm font-medium text-brand-text-secondary mb-1">Compounding Frequency</label>
+                  <select id="ci-frequency" value={frequency} onChange={e => setFrequency(e.target.value)} className="w-full bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary">
+                    <option value="365">Daily</option>
+                    <option value="12">Monthly</option>
+                    <option value="4">Quarterly</option>
+                    <option value="1">Annually</option>
+                  </select>
+                </div>
+            </div>
+            <div className="space-y-4">
+                <ResultCard title="Future Value" value={formatCurrency(result?.futureValue, currency)} description="The total value of your investment at the end of the term." />
+                <ResultCard title="Total Contributions" value={formatCurrency(result?.totalContributions, currency)} description="Principal + all periodic contributions." />
+                <ResultCard title="Total Interest Earned" value={formatCurrency(result?.totalInterest, currency)} description="The profit earned from compounding." />
+            </div>
+        </div>
+    );
+};
+
+
 const InterestRateCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     const [loanAmount, setLoanAmount] = useState('20000');
     const [monthlyPayment, setMonthlyPayment] = useState('400');
@@ -198,9 +263,6 @@ const FinanceCalculator: React.FC<CalculatorProps> = ({ currency }) => (
 );
 const IncomeTaxCalculator: React.FC<CalculatorProps> = ({ currency }) => (
   <Placeholder description="This tool will provide an estimate of your income tax liability based on your gross income, filing status, and deductions, using progressive tax brackets." />
-);
-const CompoundInterestCalculator: React.FC<CalculatorProps> = ({ currency }) => (
-  <Placeholder description="This tool will calculate the future value of an investment with compound interest, allowing for different compounding frequencies and regular contributions." />
 );
 const SalaryCalculator: React.FC<CalculatorProps> = ({ currency }) => (
   <Placeholder description="This tool will help you calculate your take-home pay by subtracting estimated taxes and deductions from your gross salary." />

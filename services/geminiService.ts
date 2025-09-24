@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Explanation } from '../types';
 
@@ -7,18 +6,24 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 export const getFormulaExplanation = async (expression: string): Promise<Explanation | null> => {
   try {
     const prompt = `
-      Analyze the following mathematical expression and identify the primary mathematical function or concept being used: "${expression}".
-      
-      Provide a concise explanation for that single, most prominent function/concept.
-      Return the explanation in a JSON object with the following structure:
+      Analyze the primary mathematical function in this expression: "${expression}".
+      Ignore basic arithmetic. Focus on the most significant function (e.g., sqrt, sin, log, nCr).
+
+      Return a JSON object with this exact structure:
       {
-        "functionName": "The common name of the function (e.g., 'Sine', 'Square Root', 'Logarithm')",
-        "formula": "The general mathematical formula (e.g., 'sin(θ) = opposite/hypotenuse', '√x', 'log_b(x) = y')",
-        "description": "A clear, one-paragraph explanation of what the function does and its purpose.",
-        "example": "A simple, practical example of its use (e.g., 'sin(30°) = 0.5')."
+        "functionName": "Name (e.g., 'Square Root')",
+        "formula": "User-friendly text formula (e.g., 'sqrt(x)')",
+        "latexFormula": "Simplified LaTeX version (e.g., '\\sqrt{x}')",
+        "description": "A clear, one-paragraph explanation.",
+        "parameters": [
+          { "param": "x", "description": "The number to find the square root of (radicand)." }
+        ],
+        "example": "A simple usage example (e.g., 'sqrt(16) = 4')."
       }
 
-      Do not explain basic arithmetic (+, -, *, /). Focus on functions like sqrt, log, sin, cos, tan, pow, etc. If multiple functions are present, explain the outermost or most significant one. If no specific function is found, return null.
+      For trigonometric functions like sin, use 'θ' as the parameter. For logarithms, use 'log_b(x)'. For combinations, use 'nCr(n, k)'.
+      The 'parameters' array should describe each variable in the formula. If there are no parameters (like for Pi), return an empty array.
+      If no specific function is found, return null.
     `;
 
     const response = await ai.models.generateContent({
@@ -31,7 +36,19 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
             properties: {
               functionName: { type: Type.STRING },
               formula: { type: Type.STRING },
+              latexFormula: { type: Type.STRING },
               description: { type: Type.STRING },
+              parameters: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    param: { type: Type.STRING },
+                    description: { type: Type.STRING }
+                  },
+                  required: ["param", "description"]
+                }
+              },
               example: { type: Type.STRING }
             },
             required: ["functionName", "formula", "description", "example"]
@@ -46,6 +63,11 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
 
   } catch (error) {
     console.error("Error fetching formula explanation from Gemini:", error);
-    return null;
+    return {
+      functionName: "Error",
+      formula: "N/A",
+      description: "Could not fetch an explanation at this time. The Gemini API might be unavailable or the request could not be processed.",
+      example: "Please try another calculation."
+    };
   }
 };
