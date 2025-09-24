@@ -7,14 +7,16 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-blue?logo=tailwindcss)](https://tailwindcss.com/)
 [![Gemini API](https://img.shields.io/badge/Gemini_API-Google-blue?logo=google)](https://ai.google.dev/)
 
-QuantumCalc is a comprehensive, web-based suite of calculators and tools designed for students, professionals, and anyone in need of powerful, accessible calculation capabilities. It combines a professional-grade scientific calculator with a wide range of specialized tools for data analysis, finance, mathematics, and everyday conversions.
+![QuantumCalc Screenshot](https://via.placeholder.com/1200x600.png?text=QuantumCalc+Application+Interface)
+
+QuantumCalc is a comprehensive, web-based suite of calculators and tools designed for students, professionals, and anyone in need of powerful, accessible calculation capabilities. It combines a professional-grade scientific calculator with a wide range of specialized tools for data analysis, finance, health, and everyday conversions.
 
 ---
 
 ## Key Features
 
 ### 🧠 Gemini-Powered Formula Explorer
-Go beyond just getting an answer. The integrated **Formula Explorer**, powered by Google's Gemini API, provides clear, concise explanations for mathematical functions in real-time. Understand the *how* and *why* behind your calculations.
+Go beyond just getting an answer. The integrated **Formula Explorer**, powered by Google's Gemini API, provides clear, concise explanations for mathematical functions in real-time. Understand the *how* and *why* behind your calculations with beautifully rendered LaTeX formulas.
 
 ### 📈 Multi-Chart Graphing Suite
 Transform data into insight with a versatile visualization tool. The graphing module isn't just a function plotter—it's a complete charting suite that supports:
@@ -22,39 +24,47 @@ Transform data into insight with a versatile visualization tool. The graphing mo
 - **Scatter Plots**: Visualize relationships between X,Y data points.
 - **Bar & Pie Charts**: Compare categorical data and see proportions at a glance.
 
-### 🔬 Professional Scientific Calculator
-Experience the power of a high-end physical calculator in your browser. It features a "2nd function" key to access secondary functions, memory storage, angle modes (DEG, RAD, GRAD), and a full set of scientific capabilities from trigonometry to combinatorics.
+### ❤️ Health & Fitness Suite
+Track and understand key wellness metrics with a dedicated suite of health calculators, including:
+- **BMI Calculator**: Determine your Body Mass Index with support for both metric and imperial units.
+- **BMR & Daily Calorie Calculator**: Estimate your basal metabolic rate and daily calorie needs based on your activity level.
 
-### 🛠️ A Full Suite of Tools
-QuantumCalc is more than one calculator—it's a collection of specialized utilities designed to handle any task you throw at it.
+### 🛠️ A Full Suite of Specialized Tools
+QuantumCalc is more than one calculator—it's a massive collection of specialized utilities designed to handle any task you throw at it, from matrix algebra to mortgage planning.
 
 ---
 
 ## Full Feature List
 
 ### Core Tools
-- **Scientific Calculator**: Full-featured with advanced functions, memory, and constants.
+- **Scientific Calculator**: Full-featured with a "2nd function" key, memory, constants, and a ticker-tape history.
 - **Graphing Suite**: Multi-mode charting for functions, scatter, bar, and pie charts.
+- **History**: Saves your recent calculations for easy access.
 
 ### Mathematical Tools
 - **Matrix Calculator**: Perform matrix operations like addition, multiplication, determinant, inverse, and transpose.
 - **Statistics Calculator**: Instantly compute key statistical metrics (mean, median, standard deviation, etc.).
 - **Equation Solver**: Solve linear and quadratic equations for 'x' with a step-by-step formula explainer.
 
+### Financial Tools
+- **Comprehensive Financial Suite**: A collection of over 15 calculators including:
+  - Mortgage, Loan, and Auto Loan Calculators with amortization schedules.
+  - Retirement, Investment, and Compound Interest projectors.
+  - Tax, Salary, and Inflation calculators.
+
+### Health & Fitness Tools
+- **BMI Calculator**: Calculates Body Mass Index from height and weight.
+- **BMR Calculator**: Estimates Basal Metabolic Rate.
+- **Daily Calorie Calculator**: Recommends daily calorie intake for weight goals.
+
 ### Converters
 - **Unit Converter**: Convert between units for Length, Mass, Temperature, Time, and Data Storage.
+- **Currency Converter**: Get real-time exchange rates for over 160 currencies.
 - **Percentage Calculator**: Quickly solve three different types of common percentage problems.
 - **Base Converter**: Real-time conversion between Binary, Octal, Decimal, and Hexadecimal.
 
-### Utilities
-- **Financial Calculator**: Includes a Loan Calculator with a full amortization schedule and a Savings Calculator with compound interest projection.
+### Utility Tools
 - **Date Calculator**: Calculate the duration between two dates or add/subtract time from a date.
-
-### General Features
-- **Light/Dark Themes**: Switch between a sleek dark mode and a clean light mode.
-- **History**: Saves your recent calculations for easy access.
-- **Keyboard Shortcuts**: Power-user friendly shortcuts for faster calculations.
-- **Responsive Design**: A clean, intuitive UI that works beautifully on any device.
 
 ---
 
@@ -105,3 +115,14 @@ EDGTEC is a 100% black-owned and 100% youth-owned enterprise.
 
 ### Registered Address
 106312 NGWABE STREET KWA-THEMA MINI SELECOURT, SPRINGS, Springs Central, Gauteng, 1575, South Africa
+
+---
+
+## License
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -30,4 +30,5 @@ export type AppTab =
   | 'date'
   | 'health'
   | 'history'
-  | 'about';
+  | 'about'
+  | 'terms';

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from './components/common/Header';
 import Calculator from './components/Calculator';
@@ -15,6 +14,7 @@ import FinancialCalculator from './components/FinancialCalculator';
 import DateCalculator from './components/DateCalculator';
 import HealthCalculator from './components/HealthCalculator';
 import About from './components/About';
+import TermsAndLicense from './components/TermsAndLicense';
 import { AppTab, HistoryEntry } from './types';
 
 const App: React.FC = () => {
@@ -82,6 +82,8 @@ const App: React.FC = () => {
         return <History history={history} loadFromHistory={loadFromHistory} clearHistory={clearHistory} />;
       case 'about':
         return <About />;
+      case 'terms':
+        return <TermsAndLicense />;
       default:
         return <Calculator addToHistory={addToHistory} expressionToLoad={expressionToLoad} onExpressionLoaded={handleExpressionLoaded} />;
     }

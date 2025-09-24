@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Calculator as CalculatorIcon,
@@ -16,7 +15,9 @@ import {
   Info,
   Beaker,
   TestTube,
-  HeartPulse
+  HeartPulse,
+  MoreHorizontal,
+  FileText
 } from 'lucide-react';
 
 import Logo from './Logo';
@@ -90,17 +91,16 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabClick }) => {
             isActive={activeTab === 'health'}
             onClick={() => onTabClick('health')}
           />
-          <Tab
-            label="History"
-            Icon={History}
-            isActive={activeTab === 'history'}
-            onClick={() => onTabClick('history')}
-          />
-          <Tab
-            label="About"
-            Icon={Info}
-            isActive={activeTab === 'about'}
-            onClick={() => onTabClick('about')}
+          <DropdownTab
+            label="More"
+            Icon={MoreHorizontal}
+            activeTab={activeTab}
+            onTabClick={onTabClick}
+            subTabs={[
+              { id: 'history', label: 'History', Icon: History },
+              { id: 'about', label: 'About', Icon: Info },
+              { id: 'terms', label: 'Terms & License', Icon: FileText },
+            ]}
           />
         </nav>
       </div>
