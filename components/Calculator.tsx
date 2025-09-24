@@ -62,9 +62,10 @@ const LatexRenderer: React.FC<{ latex: string }> = React.memo(({ latex }) => {
 
 
 const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad, onExpressionLoaded }) => {
-  const [expression, setExpression] = useState('');
-  const [displayValue, setDisplayValue] = useState('0');
-  const [result, setResult] = useState<string|null>(null);
+  const [expression, setExpression] = useState(''); // The top, ongoing expression line
+  const [currentInput, setCurrentInput] = useState('0'); // The bottom, current input line
+  const [isResultState, setIsResultState] = useState(false); // Are we showing a final result?
+  
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,14 +107,22 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     return p;
   }, [angleMode]);
 
+  const clear = useCallback(() => {
+    setExpression('');
+    setCurrentInput('0');
+    setIsResultState(false);
+    setError(null);
+    setExplanation(null);
+    setIsSecond(false);
+  }, []);
+
   useEffect(() => {
     if (expressionToLoad) {
-      setExpression(expressionToLoad.expression);
-      setDisplayValue(expressionToLoad.expression);
-      setResult(null);
+      clear();
+      setCurrentInput(expressionToLoad.expression);
       onExpressionLoaded();
     }
-  }, [expressionToLoad, onExpressionLoaded]);
+  }, [expressionToLoad, onExpressionLoaded, clear]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -122,63 +131,53 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
 
   const handleInput = useCallback((value: string) => {
     setError(null);
-    if (result !== null) { 
-        setExpression(value);
-        setDisplayValue(value);
-        setResult(null);
+    if (isResultState) {
+        setExpression('');
+        setCurrentInput(value);
+        setIsResultState(false);
     } else {
-        setDisplayValue(prev => {
+        setCurrentInput(prev => {
             if (prev === '0' && value !== '.') return value;
-            if (['+', '−', '×', '÷', '%'].includes(value) && ['+', '−', '×', '÷', '%'].includes(prev.slice(-1))) {
-                return prev.slice(0, -1) + value;
-            }
             return prev + value;
         });
     }
     if (isSecond) setIsSecond(false);
-  }, [result, isSecond]);
+  }, [isResultState, isSecond]);
 
   const handleFunction = useCallback((func: string, displayFunc?: string) => {
     setError(null);
     const display = displayFunc || func;
-    if (result !== null) {
-        setExpression(`${func}${result})`);
-        setDisplayValue(`${display}${result})`);
-        setResult(null);
+    
+    if (isResultState) {
+        setExpression(`${display}${currentInput})`);
+        setCurrentInput(''); // The function is now in the expression
+        setIsResultState(false);
     } else {
-        setDisplayValue(prev => {
+        setCurrentInput(prev => {
             if(prev === '0') return `${display}`;
             return `${prev}${display}`;
         });
     }
     if (isSecond) setIsSecond(false);
-  }, [result, isSecond]);
-  
-  const clear = useCallback(() => {
-    setExpression('');
-    setDisplayValue('0');
-    setResult(null);
-    setError(null);
-    setExplanation(null);
-    setIsSecond(false);
-  }, []);
+  }, [currentInput, isResultState, isSecond]);
   
   const backspace = useCallback(() => {
     setError(null);
-    if (result !== null) {
+    if (isResultState) {
         clear();
         return;
     }
-    setDisplayValue(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
-  }, [result, clear]);
+    setCurrentInput(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
+  }, [isResultState, clear]);
 
   const calculate = useCallback(async () => {
     if (error || isLoading) return;
     
-    setExpression(displayValue);
+    const fullExpression = (expression + currentInput).trim();
     setError(null);
+
     try {
-      const sanitizedExpression = displayValue
+      const sanitizedExpression = fullExpression
         .replace(/π/g, 'pi')
         .replace(/√/g, 'sqrt')
         .replace(/∛/g, 'cbrt')
@@ -189,10 +188,13 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
       const evalResult = parser.evaluate(sanitizedExpression);
       const resultStr = String(parseFloat(evalResult.toFixed(10)));
       
-      const newHistoryEntry = { expression: displayValue, result: resultStr, timestamp: new Date().toISOString() };
+      const newHistoryEntry = { expression: fullExpression, result: resultStr, timestamp: new Date().toISOString() };
       addToHistory(newHistoryEntry);
       setTickerHistory(prev => [newHistoryEntry, ...prev].slice(0, 5));
-      setResult(resultStr);
+      
+      setExpression(fullExpression + ' =');
+      setCurrentInput(resultStr);
+      setIsResultState(true);
       
       setIsLoading(true);
       setExplanation(null);
@@ -200,31 +202,30 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
       setExplanation(expl);
     } catch (e) {
       setError('Invalid Expression');
-      setResult(null);
     } finally {
       setIsLoading(false);
       setIsSecond(false);
     }
-  }, [displayValue, error, isLoading, addToHistory, parser]);
+  }, [expression, currentInput, error, isLoading, addToHistory, parser]);
 
   const memoryClear = () => { setMemory(null); showToast("Memory cleared"); };
-  const memoryRecall = () => { if(memory !== null) { setDisplayValue(String(memory)); setResult(null); } };
+  const memoryRecall = () => { if(memory !== null) { setCurrentInput(String(memory)); setIsResultState(false); } };
   const memoryStore = () => {
-    const valToStore = result ? parseFloat(result) : parseFloat(displayValue);
+    const valToStore = parseFloat(currentInput);
     if (!isNaN(valToStore)) {
         setMemory(valToStore);
         showToast("Value stored in memory");
     }
   };
   const memoryAdd = () => {
-    const currentVal = result ? parseFloat(result) : parseFloat(displayValue);
+    const currentVal = parseFloat(currentInput);
      if (!isNaN(currentVal)) {
         setMemory(prev => (prev || 0) + currentVal);
         showToast("Value added to memory");
     }
   };
   const memorySubtract = () => {
-    const currentVal = result ? parseFloat(result) : parseFloat(displayValue);
+    const currentVal = parseFloat(currentInput);
     if (!isNaN(currentVal)) {
         setMemory(prev => (prev || 0) - currentVal);
         showToast("Value subtracted from memory");
@@ -233,11 +234,13 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
   
   const handleOp = (op: string) => {
     setError(null);
-    if (result !== null) {
-      setDisplayValue(result + op);
-      setResult(null);
+    if (isResultState) {
+      setExpression(currentInput + ` ${op} `);
+      setCurrentInput('0');
+      setIsResultState(false);
     } else {
-      setDisplayValue(displayValue + op);
+      setExpression(prev => (prev + currentInput + ` ${op} `).trim() + ' ');
+      setCurrentInput('0');
     }
   };
 
@@ -261,66 +264,66 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     }
   };
 
-  const buttonGrid: { label: string, secondLabel?: string, action: any, secondAction?: any, style: string, colSpan?: number, active?: boolean }[][] = [
+  const buttonGrid: { label: string, secondLabel?: string, action: any, secondAction?: any, style: string, colSpan?: number, active?: boolean, title?: string, secondTitle?: string }[][] = [
       [
-          { label: '2nd', action: () => setIsSecond(s => !s), style: 'func', active: isSecond },
-          { label: 'π', action: () => handleInput('π'), style: 'func' },
-          { label: 'e', action: () => handleInput('e'), style: 'func' },
-          { label: 'AC', action: clear, style: 'clear' },
-          { label: 'del', action: backspace, style: 'clear' },
+          { label: '2nd', action: () => setIsSecond(s => !s), style: 'func', active: isSecond, title: 'Toggle Secondary Functions' },
+          { label: 'π', action: () => handleInput('π'), style: 'func', title: 'Pi (3.141...)' },
+          { label: 'e', action: () => handleInput('e'), style: 'func', title: "Euler's Number (2.718...)" },
+          { label: 'AC', action: clear, style: 'clear', title: 'All Clear (Esc)' },
+          { label: 'del', action: backspace, style: 'clear', title: 'Delete (Backspace)' },
       ],
       [
-          { label: 'x²', secondLabel: 'x³', action: () => handleInput('^2'), secondAction: () => handleInput('^3'), style: 'func' },
-          { label: '1/x', secondLabel: 'rand', action: () => handleInput('^(-1)'), secondAction: () => setDisplayValue(String(Math.random())), style: 'func' },
-          { label: '√', secondLabel: '∛', action: () => handleFunction('sqrt(', '√('), secondAction: () => handleFunction('cbrt(', '∛('), style: 'func' },
-          { label: '(', action: () => handleInput('('), style: 'func' },
-          { label: ')', action: () => handleInput(')'), style: 'func' },
+          { label: 'x²', secondLabel: 'x³', action: () => handleInput('^2'), secondAction: () => handleInput('^3'), style: 'func', title: 'Square (x^2)', secondTitle: 'Cube (x^3)' },
+          { label: '1/x', secondLabel: 'rand', action: () => handleInput('^(-1)'), secondAction: () => { setCurrentInput(String(Math.random())); setIsResultState(false); }, style: 'func', title: 'Reciprocal (1/x)', secondTitle: 'Random Number' },
+          { label: '√', secondLabel: '∛', action: () => handleFunction('sqrt(', '√('), secondAction: () => handleFunction('cbrt(', '∛('), style: 'func', title: 'Square Root (sqrt)', secondTitle: 'Cube Root (cbrt)' },
+          { label: '(', action: () => handleInput('('), style: 'func', title: 'Open Parenthesis' },
+          { label: ')', action: () => handleInput(')'), style: 'func', title: 'Close Parenthesis' },
       ],
       [
-          { label: 'sin', secondLabel: 'asin', action: () => handleFunction('sin('), secondAction: () => handleFunction('asin('), style: 'func' },
-          { label: 'cos', secondLabel: 'acos', action: () => handleFunction('cos('), secondAction: () => handleFunction('acos('), style: 'func' },
-          { label: 'tan', secondLabel: 'atan', action: () => handleFunction('tan('), secondAction: () => handleFunction('atan('), style: 'func' },
-          { label: 'log', secondLabel: 'log₂', action: () => handleFunction('log('), secondAction: () => handleFunction('log2('), style: 'func' },
-          { label: 'ln', action: () => handleFunction('ln('), style: 'func' },
+          { label: 'sin', secondLabel: 'asin', action: () => handleFunction('sin('), secondAction: () => handleFunction('asin('), style: 'func', title: 'Sine', secondTitle: 'Inverse Sine (arcsin)' },
+          { label: 'cos', secondLabel: 'acos', action: () => handleFunction('cos('), secondAction: () => handleFunction('acos('), style: 'func', title: 'Cosine', secondTitle: 'Inverse Cosine (arccos)' },
+          { label: 'tan', secondLabel: 'atan', action: () => handleFunction('tan('), secondAction: () => handleFunction('atan('), style: 'func', title: 'Tangent', secondTitle: 'Inverse Tangent (arctan)' },
+          { label: 'log', secondLabel: 'log₂', action: () => handleFunction('log('), secondAction: () => handleFunction('log2('), style: 'func', title: 'Logarithm (base 10)', secondTitle: 'Logarithm (base 2)' },
+          { label: 'ln', action: () => handleFunction('ln('), style: 'func', title: 'Natural Logarithm (ln)' },
       ],
       [
-          { label: 'sinh', secondLabel: 'asinh', action: () => handleFunction('sinh('), secondAction: () => handleFunction('asinh('), style: 'func' },
-          { label: 'cosh', secondLabel: 'acosh', action: () => handleFunction('cosh('), secondAction: () => handleFunction('acosh('), style: 'func' },
-          { label: 'tanh', secondLabel: 'atanh', action: () => handleFunction('tanh('), secondAction: () => handleFunction('atanh('), style: 'func' },
-          { label: 'nCr', action: () => handleFunction('nCr('), style: 'func' },
-          { label: 'nPr', action: () => handleFunction('nPr('), style: 'func' },
+          { label: 'sinh', secondLabel: 'asinh', action: () => handleFunction('sinh('), secondAction: () => handleFunction('asinh('), style: 'func', title: 'Hyperbolic Sine', secondTitle: 'Inverse Hyperbolic Sine' },
+          { label: 'cosh', secondLabel: 'acosh', action: () => handleFunction('cosh('), secondAction: () => handleFunction('acosh('), style: 'func', title: 'Hyperbolic Cosine', secondTitle: 'Inverse Hyperbolic Cosine' },
+          { label: 'tanh', secondLabel: 'atanh', action: () => handleFunction('tanh('), secondAction: () => handleFunction('atanh('), style: 'func', title: 'Hyperbolic Tangent', secondTitle: 'Inverse Hyperbolic Tangent' },
+          { label: 'nCr', action: () => handleFunction('nCr('), style: 'func', title: 'Combinations' },
+          { label: 'nPr', action: () => handleFunction('nPr('), style: 'func', title: 'Permutations' },
       ],
        [
           { label: '7', action: () => handleInput('7'), style: 'num' },
           { label: '8', action: () => handleInput('8'), style: 'num' },
           { label: '9', action: () => handleInput('9'), style: 'num' },
-          { label: '÷', action: () => handleOp('÷'), style: 'op' },
-          { label: 'MC', action: memoryClear, style: 'mem' },
+          { label: '÷', action: () => handleOp('÷'), style: 'op', title: 'Divide' },
+          { label: 'MC', action: memoryClear, style: 'mem', title: 'Memory Clear' },
       ],
       [
           { label: '4', action: () => handleInput('4'), style: 'num' },
           { label: '5', action: () => handleInput('5'), style: 'num' },
           { label: '6', action: () => handleInput('6'), style: 'num' },
-          { label: '×', action: () => handleOp('×'), style: 'op' },
-          { label: 'MR', action: memoryRecall, style: 'mem' },
+          { label: '×', action: () => handleOp('×'), style: 'op', title: 'Multiply' },
+          { label: 'MR', action: memoryRecall, style: 'mem', title: 'Memory Recall' },
       ],
       [
           { label: '1', action: () => handleInput('1'), style: 'num' },
           { label: '2', action: () => handleInput('2'), style: 'num' },
           { label: '3', action: () => handleInput('3'), style: 'num' },
-          { label: '−', action: () => handleOp('−'), style: 'op' },
-          { label: 'M+', action: memoryAdd, style: 'mem' },
+          { label: '−', action: () => handleOp('−'), style: 'op', title: 'Subtract' },
+          { label: 'M+', action: memoryAdd, style: 'mem', title: 'Memory Add' },
       ],
       [
           { label: '0', action: () => handleInput('0'), style: 'num', colSpan: 2 },
-          { label: '.', action: () => handleInput('.'), style: 'num' },
-          { label: '+', action: () => handleOp('+'), style: 'op' },
-          { label: 'M-', action: memorySubtract, style: 'mem' },
+          { label: '.', action: () => handleInput('.'), style: 'num', title: 'Decimal Point' },
+          { label: '+', action: () => handleOp('+'), style: 'op', title: 'Add' },
+          { label: 'M-', action: memorySubtract, style: 'mem', title: 'Memory Subtract' },
       ],
       [
-          { label: '%', action: () => handleInput('%'), style: 'func' },
-          { label: 'EE', action: () => handleInput('e'), style: 'func' },
-          { label: '=', action: calculate, style: 'op', colSpan: 3 },
+          { label: '%', action: () => handleInput('%'), style: 'func', title: 'Percentage' },
+          { label: 'EE', action: () => handleInput('e'), style: 'func', title: 'Exponent (Scientific Notation)' },
+          { label: '=', action: calculate, style: 'op', colSpan: 3, title: 'Equals (Enter)' },
       ]
   ];
 
@@ -346,9 +349,9 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
                       <span className="text-brand-primary">{angleMode.toUpperCase()}</span>
                       {memory !== null && <span className="text-teal-400">M</span>}
                   </div>
-                  <div className="text-brand-text-secondary text-xl break-words h-7 overflow-x-auto text-right font-mono">{result ? expression : ' '}</div>
+                  <div className="text-brand-text-secondary text-xl break-words h-7 overflow-x-auto text-right font-mono">{expression || ' '}</div>
                   <div className="text-4xl font-bold text-brand-text break-words h-12 overflow-x-auto text-right font-mono">
-                      {result ?? displayValue}
+                      {currentInput}
                   </div>
                   {error && <div className="text-red-400 text-sm font-semibold h-5 text-right">{error}</div>}
               </div>
@@ -360,6 +363,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
                     <Button
                         onClick={isSecond && b.secondAction ? b.secondAction : b.action}
                         className={`${getStyle(b.style, b.active)} h-12 text-base w-full`}
+                        title={isSecond && b.secondTitle ? b.secondTitle : b.title}
                     >
                         {isSecond && b.secondLabel ? b.secondLabel : b.label}
                     </Button>

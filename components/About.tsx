@@ -1,80 +1,79 @@
-import React from 'react';
-import { Building, Globe, Mail, Phone, MapPin, BarChart2, Users, UserCheck } from 'lucide-react';
 
-const InfoCard: React.FC<{ title: string; icon: React.ElementType; children: React.ReactNode }> = ({ title, icon: Icon, children }) => (
+import React from 'react';
+import { Info, BrainCircuit, Layers, GitBranch } from 'lucide-react';
+
+const Section: React.FC<{ title: string; icon: React.ElementType; children: React.ReactNode }> = ({ title, icon: Icon, children }) => (
     <div className="bg-brand-surface/50 p-6 rounded-lg">
         <h3 className="text-xl font-bold mb-4 text-brand-accent flex items-center gap-2">
             <Icon size={22} />
             {title}
         </h3>
-        <div className="space-y-2">{children}</div>
-    </div>
-);
-
-const InfoRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-    <div className="flex flex-col sm:flex-row justify-between py-2 border-b border-brand-border last:border-b-0">
-        <span className="font-semibold text-brand-text-secondary">{label}</span>
-        <span className="font-mono text-right">{value}</span>
+        <div className="prose prose-invert prose-sm max-w-none text-brand-text-secondary space-y-4">
+            {children}
+        </div>
     </div>
 );
 
 const About: React.FC = () => {
     return (
         <div>
-            <h2 className="text-3xl font-bold mb-6 text-brand-primary">About the Supplier</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-8">
-                    <InfoCard title="Supplier Identification" icon={Building}>
-                        <InfoRow label="Legal Name" value="EDGTEC" />
-                        <InfoRow label="Supplier Number" value="MAAA1626554" />
-                        <InfoRow label="Supplier Type" value="Private Company (Pty)(Ltd)" />
-                        <InfoRow label="Registration Number" value="2025/534716/07" />
-                        <InfoRow label="Business Status" value="In Business" />
-                        <InfoRow label="Tax Status" value="Tax Compliant" />
-                    </InfoCard>
+            <div className="text-center mb-8">
+                <h2 className="text-4xl font-extrabold text-brand-primary tracking-tight">About QuantumCalc</h2>
+                <p className="mt-3 max-w-2xl mx-auto text-lg text-brand-text-secondary">
+                    A modern, feature-rich calculator designed for a wide range of mathematical and practical tasks.
+                </p>
+            </div>
+            <div className="space-y-8">
+                <Section title="Our Mission" icon={Info}>
+                    <p>
+                        QuantumCalc aims to be a comprehensive and intuitive tool for students, professionals, and enthusiasts. We provide a suite of powerful calculators in a clean, modern interface, moving beyond simple arithmetic to support complex mathematical operations, data visualization, and practical everyday calculations.
+                    </p>
+                    <p>
+                        Our integration with the Gemini API for the "Formula Explorer" is a step towards making learning interactive and accessible, providing explanations for mathematical functions as you use them.
+                    </p>
+                </Section>
 
-                    <InfoCard title="Contact Information" icon={Users}>
-                         <div>
-                            <p className="font-bold">Ranthutu Lepheane (Preferred)</p>
-                            <div className="flex items-center gap-2 mt-1 text-sm text-brand-text-secondary">
-                                <Mail size={14} /><a href="mailto:r.lepheane@outlook.com" className="hover:text-brand-primary">r.lepheane@outlook.com</a>
-                            </div>
-                             <div className="flex items-center gap-2 mt-1 text-sm text-brand-text-secondary">
-                                <Phone size={14} /><span>+277 11 84 6709</span>
-                            </div>
-                        </div>
-                        <div className="pt-2 mt-2 border-t border-brand-border">
-                            <p className="font-bold">Siphosakhe Mathews Msimango</p>
-                             <div className="flex items-center gap-2 mt-1 text-sm text-brand-text-secondary">
-                                <Mail size={14} /><a href="mailto:siphosakhemsimanngo@gmail.com" className="hover:text-brand-primary">siphosakhemsimanngo@gmail.com</a>
-                            </div>
-                             <div className="flex items-center gap-2 mt-1 text-sm text-brand-text-secondary">
-                                <Phone size={14} /><span>069 423 7030</span>
-                            </div>
-                        </div>
-                    </InfoCard>
+                <Section title="Core Features" icon={Layers}>
+                    <ul className="list-disc pl-5 space-y-2">
+                        <li>
+                            <strong>Scientific Calculator:</strong> A powerful calculator with memory functions, angle modes, and a wide array of scientific functions. Features an AI-powered "Formula Explorer" to explain mathematical concepts.
+                        </li>
+                        <li>
+                            <strong>Graphing & Charting:</strong> Visualize data with a function plotter, scatter plots, bar charts, and pie charts.
+                        </li>
+                        <li>
+                            <strong>Advanced Math Tools:</strong> Includes dedicated modules for Matrix operations, Statistical analysis, and solving Linear/Quadratic Equations.
+                        </li>
+                        <li>
+                            <strong>Versatile Converters:</strong> A collection of converters for Units (Length, Mass, etc.), Currency (with live exchange rates), Percentages, and Number Bases.
+                        </li>
+                         <li>
+                            <strong>Financial Calculators:</strong> Tools for calculating loan payments, compound interest, and more to assist with financial planning.
+                        </li>
+                        <li>
+                            <strong>Utility Calculators:</strong> Practical tools for Date calculations, and Health metrics like BMI and BMR.
+                        </li>
+                    </ul>
+                </Section>
 
-                     <InfoCard title="Registered Address" icon={MapPin}>
-                        <p>106312 NGWABE STREET KWA-THEMA MINI SELECOURT</p>
-                        <p>SPRINGS, Springs Central</p>
-                        <p>Gauteng, 1575</p>
-                        <p>South Africa</p>
-                    </InfoCard>
-                </div>
-
-                 <div className="space-y-8">
-                    <InfoCard title="Ownership Structure" icon={UserCheck}>
-                        <InfoRow label="Black Owned" value="100.00%" />
-                        <InfoRow label="Youth Owned" value="100.00%" />
-                        <div className="pt-4 mt-2 border-t border-brand-border">
-                            <h4 className="font-semibold text-brand-text mb-2">Owners:</h4>
-                            <ul className="list-disc list-inside text-brand-text-secondary">
-                                <li>Ranthutu Lepheane</li>
-                                <li>Siphosakhe Mathews Msimango</li>
-                            </ul>
-                        </div>
-                    </InfoCard>
-                 </div>
+                <Section title="Technology Stack" icon={BrainCircuit}>
+                     <p>
+                        QuantumCalc is built using a modern frontend stack to ensure a fast, responsive, and reliable user experience.
+                    </p>
+                    <ul className="list-disc pl-5 space-y-2">
+                        <li><strong>Framework:</strong> React with TypeScript</li>
+                        <li><strong>Styling:</strong> Tailwind CSS</li>
+                        <li><strong>Charting:</strong> Recharts</li>
+                        <li><strong>Math Engine:</strong> math.js</li>
+                        <li><strong>AI Integration:</strong> Google Gemini API</li>
+                    </ul>
+                </Section>
+                
+                <Section title="Open Source" icon={GitBranch}>
+                    <p>
+                        This project is open source and available under the MIT License. We encourage you to explore the code, report issues, and contribute to its development. You can find the source code and license details in the "Terms & License" section.
+                    </p>
+                </Section>
             </div>
         </div>
     );
