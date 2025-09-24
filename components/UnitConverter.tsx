@@ -57,7 +57,6 @@ const CONVERSION_DATA = {
 
 type Category = keyof typeof CONVERSION_DATA;
 
-// FIX: Changed to a named export to fix module resolution error.
 export const UnitConverter: React.FC = () => {
   const [category, setCategory] = useState<Category>('Length');
   const [fromUnit, setFromUnit] = useState<string>('Meter');

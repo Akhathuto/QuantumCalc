@@ -1,26 +1,70 @@
-# QuantumCalc
+# QuantumCalc ⚛️
 
-QuantumCalc is a comprehensive, all-in-one suite of calculators and tools designed for students, professionals, and anyone in need of powerful, accessible calculation capabilities. It combines a full-featured scientific calculator with a wide range of specialized tools for finance, mathematics, and data analysis.
+*Your All-in-One Scientific & Utility Suite, Powered by Gemini.*
 
-## Features
-- **Scientific Calculator**: A professional-grade calculator with a "2nd function" key, memory, angle modes (DEG, RAD, GRAD), and a full set of scientific functions.
-- **Formula Explorer**: Integrated with Google's Gemini API to provide clear, concise explanations for mathematical formulas in real-time.
-- **Multi-Chart Graphing**: A versatile data visualization tool with support for:
-  - Function Plotting (y = f(x))
-  - Scatter Plots
-  - Bar Charts
-  - Pie Charts
-- **Matrix Calculator**: Perform matrix operations like addition, multiplication, determinant, inverse, and transpose for 2x2 or 3x3 matrices.
-- **Statistics Calculator**: Instantly compute key statistical metrics (mean, median, standard deviation, etc.) from a data set.
-- **Equation Solver**: Solve linear and quadratic equations for 'x', complete with a step-by-step formula explainer.
-- **Financial Calculator**: A powerful tool for personal finance, including:
-  - Loan Calculator with full amortization schedule.
-  - Savings Calculator with compound interest projection.
-- **Unit Converter**: Convert between various units for Length, Mass, Temperature, Time, and Data Storage.
+[![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-blue?logo=tailwindcss)](https://tailwindcss.com/)
+[![Gemini API](https://img.shields.io/badge/Gemini_API-Google-blue?logo=google)](https://ai.google.dev/)
+
+QuantumCalc is a comprehensive, web-based suite of calculators and tools designed for students, professionals, and anyone in need of powerful, accessible calculation capabilities. It combines a professional-grade scientific calculator with a wide range of specialized tools for data analysis, finance, mathematics, and everyday conversions.
+
+---
+
+## Key Features
+
+### 🧠 Gemini-Powered Formula Explorer
+Go beyond just getting an answer. The integrated **Formula Explorer**, powered by Google's Gemini API, provides clear, concise explanations for mathematical functions in real-time. Understand the *how* and *why* behind your calculations.
+
+### 📈 Multi-Chart Graphing Suite
+Transform data into insight with a versatile visualization tool. The graphing module isn't just a function plotter—it's a complete charting suite that supports:
+- **Function Plotting**: Graph complex mathematical functions (`y = f(x)`).
+- **Scatter Plots**: Visualize relationships between X,Y data points.
+- **Bar & Pie Charts**: Compare categorical data and see proportions at a glance.
+
+### 🔬 Professional Scientific Calculator
+Experience the power of a high-end physical calculator in your browser. It features a "2nd function" key to access secondary functions, memory storage, angle modes (DEG, RAD, GRAD), and a full set of scientific capabilities from trigonometry to combinatorics.
+
+### 🛠️ A Full Suite of Tools
+QuantumCalc is more than one calculator—it's a collection of specialized utilities designed to handle any task you throw at it.
+
+---
+
+## Full Feature List
+
+### Core Tools
+- **Scientific Calculator**: Full-featured with advanced functions, memory, and constants.
+- **Graphing Suite**: Multi-mode charting for functions, scatter, bar, and pie charts.
+
+### Mathematical Tools
+- **Matrix Calculator**: Perform matrix operations like addition, multiplication, determinant, inverse, and transpose.
+- **Statistics Calculator**: Instantly compute key statistical metrics (mean, median, standard deviation, etc.).
+- **Equation Solver**: Solve linear and quadratic equations for 'x' with a step-by-step formula explainer.
+
+### Converters
+- **Unit Converter**: Convert between units for Length, Mass, Temperature, Time, and Data Storage.
+- **Percentage Calculator**: Quickly solve three different types of common percentage problems.
 - **Base Converter**: Real-time conversion between Binary, Octal, Decimal, and Hexadecimal.
-- **Percentage Calculator**: Quickly solve common percentage problems.
+
+### Utilities
+- **Financial Calculator**: Includes a Loan Calculator with a full amortization schedule and a Savings Calculator with compound interest projection.
 - **Date Calculator**: Calculate the duration between two dates or add/subtract time from a date.
-- **And More**: Light/Dark themes, keyboard shortcuts, and a clean, responsive user interface.
+
+### General Features
+- **Light/Dark Themes**: Switch between a sleek dark mode and a clean light mode.
+- **History**: Saves your recent calculations for easy access.
+- **Keyboard Shortcuts**: Power-user friendly shortcuts for faster calculations.
+- **Responsive Design**: A clean, intuitive UI that works beautifully on any device.
+
+---
+
+## Tech Stack
+
+- **Frontend**: React 19, TypeScript
+- **Styling**: Tailwind CSS
+- **AI Integration**: Google Gemini API
+- **Mathematics Engine**: Math.js
+- **Charting**: Recharts
 
 ---
 
