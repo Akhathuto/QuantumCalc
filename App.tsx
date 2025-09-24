@@ -13,6 +13,7 @@ import PercentageCalculator from './components/PercentageCalculator';
 import BaseConverter from './components/BaseConverter';
 import FinancialCalculator from './components/FinancialCalculator';
 import DateCalculator from './components/DateCalculator';
+import HealthCalculator from './components/HealthCalculator';
 import About from './components/About';
 import { AppTab, HistoryEntry } from './types';
 
@@ -75,6 +76,8 @@ const App: React.FC = () => {
         return <FinancialCalculator />;
       case 'date':
         return <DateCalculator />;
+      case 'health':
+        return <HealthCalculator />;
       case 'history':
         return <History history={history} loadFromHistory={loadFromHistory} clearHistory={clearHistory} />;
       case 'about':

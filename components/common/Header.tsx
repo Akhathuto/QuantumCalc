@@ -15,7 +15,8 @@ import {
   History,
   Info,
   Beaker,
-  TestTube
+  TestTube,
+  HeartPulse
 } from 'lucide-react';
 
 import Logo from './Logo';
@@ -82,6 +83,12 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabClick }) => {
             Icon={Calendar}
             isActive={activeTab === 'date'}
             onClick={() => onTabClick('date')}
+          />
+          <Tab
+            label="Health"
+            Icon={HeartPulse}
+            isActive={activeTab === 'health'}
+            onClick={() => onTabClick('health')}
           />
           <Tab
             label="History"

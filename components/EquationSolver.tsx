@@ -7,7 +7,7 @@ const math = create(all);
 
 interface SolvedDetails {
   type: 'linear' | 'quadratic';
-  coeffs: { a?: number; b: number; c: number };
+  coeffs: { a: number; b: number; c: number };
   discriminant?: number;
 }
 
@@ -26,11 +26,11 @@ const FormulaExplainer: React.FC<{ details: SolvedDetails }> = ({ details }) => 
                     <p>This is a linear equation of the form <code className="font-mono bg-brand-bg p-1 rounded">ax + b = 0</code>.</p>
                     <p>The solution is found using the formula:</p>
                     <div className="font-mono bg-brand-bg p-3 rounded-md text-center text-lg">x = -b / a</div>
-                    <p>Using your values (a={formatCoeff(b)}, b={formatCoeff(c)}):</p>
-                    <div className="font-mono bg-brand-bg p-3 rounded-md text-center text-lg">x = -{formatCoeff(c)} / {formatCoeff(b)}</div>
+                    <p>Using your values (a={formatCoeff(a)}, b={formatCoeff(b)}):</p>
+                    <div className="font-mono bg-brand-bg p-3 rounded-md text-center text-lg">x = -{formatCoeff(b)} / {formatCoeff(a)}</div>
                 </div>
             )}
-            {type === 'quadratic' && a !== undefined && (
+            {type === 'quadratic' && (
                  <div className="space-y-4">
                     <p>This is a quadratic equation of the form <code className="font-mono bg-brand-bg p-1 rounded">ax² + bx + c = 0</code>.</p>
                     <p>The solution is found using the Quadratic Formula:</p>
@@ -120,10 +120,10 @@ const EquationSolver: React.FC = () => {
                 const b = coeffs[1] || 0;
                 const a = coeffs[2] || 0;
                 
-                if (a === 0) { // It's actually linear
+                if (a === 0) { // It's actually linear: bx + c = 0
                      if (b !== 0) {
                         newSolutions.push(-c / b);
-                        setSolvedDetails({ type: 'linear', coeffs: { b, c }});
+                        setSolvedDetails({ type: 'linear', coeffs: { a: b, b: c, c: 0 }});
                     } else {
                         setError(c === 0 ? "Infinite solutions (0 = 0)" : "No solution");
                     }
@@ -142,14 +142,14 @@ const EquationSolver: React.FC = () => {
                         newSolutions.push(math.complex(realPart, -imagPart));
                     }
                 }
-            } else if (coeffs.length === 2) { // Linear: bx + c = 0
-                const c = coeffs[0] || 0;
-                const b = coeffs[1] || 0;
-                if (b !== 0) {
-                    newSolutions.push(-c / b);
-                    setSolvedDetails({ type: 'linear', coeffs: { b, c }});
+            } else if (coeffs.length === 2) { // Linear: ax + b = 0
+                const b_const = coeffs[0] || 0; // The constant term
+                const a_coeff = coeffs[1] || 0; // The x coefficient
+                if (a_coeff !== 0) {
+                    newSolutions.push(-b_const / a_coeff);
+                    setSolvedDetails({ type: 'linear', coeffs: { a: a_coeff, b: b_const, c: 0 }});
                 } else {
-                    setError(c === 0 ? "Infinite solutions (0 = 0)" : "No solution");
+                    setError(b_const === 0 ? "Infinite solutions (0 = 0)" : "No solution");
                 }
             } else if (coeffs.length === 1) { // Constant: c = 0
                  setError(coeffs[0] === 0 ? "Infinite solutions (0 = 0)" : `No solution (${coeffs[0]} = 0)`);

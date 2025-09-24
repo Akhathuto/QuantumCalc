@@ -4,9 +4,15 @@ import { HistoryEntry, Explanation } from '../types';
 import { getFormulaExplanation } from '../services/geminiService';
 import Button from './common/Button';
 import { create, all } from 'mathjs';
-import { Loader, Brain, XCircle, FlaskConical } from 'lucide-react';
+import { Loader, Brain, FlaskConical } from 'lucide-react';
 
 const math = create(all);
+// Add nPr and nCr functions
+math.import({
+  nPr: (n: number, k: number) => math.permutations(n, k),
+  nCr: (n: number, k: number) => math.combinations(n, k),
+}, { override: true });
+
 
 interface CalculatorProps {
   addToHistory: (entry: HistoryEntry) => void;
@@ -29,99 +35,133 @@ const SCIENTIFIC_CONSTANTS = [
 ];
 
 const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad, onExpressionLoaded }) => {
-  const [expression, setExpression] = useState('0');
-  const [result, setResult] = useState('');
+  const [expression, setExpression] = useState('');
+  const [displayValue, setDisplayValue] = useState('0');
+  const [result, setResult] = useState<string|null>(null);
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [angleMode, setAngleMode] = useState<AngleMode>('deg');
-  const [memory, setMemory] = useState(0);
+  const [memory, setMemory] = useState<number | null>(null);
+  const [isSecond, setIsSecond] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [tickerHistory, setTickerHistory] = useState<HistoryEntry[]>([]);
 
   const parser = useMemo(() => {
     const p = math.parser();
-    
-    const degToRad = (angle: number) => angle * Math.PI / 180;
-    const gradToRad = (angle: number) => angle * Math.PI / 200;
-    const radToDeg = (angle: number) => angle * 180 / Math.PI;
-    const radToGrad = (angle: number) => angle * 200 / Math.PI;
+    p.set('degToRad', (angle: number) => angle * Math.PI / 180);
+    p.set('gradToRad', (angle: number) => angle * Math.PI / 200);
+    p.set('radToDeg', (angle: number) => angle * 180 / Math.PI);
+    p.set('radToGrad', (angle: number) => angle * 200 / Math.PI);
+
+    // Clear previous definitions
+    p.evaluate('sin(x)=sin(x)');
+    p.evaluate('cos(x)=cos(x)');
+    p.evaluate('tan(x)=tan(x)');
+    p.evaluate('asin(x)=asin(x)');
+    p.evaluate('acos(x)=acos(x)');
+    p.evaluate('atan(x)=atan(x)');
 
     if (angleMode === 'deg') {
-        p.set('sin', (x: number) => math.sin(degToRad(x)));
-        p.set('cos', (x: number) => math.cos(degToRad(x)));
-        p.set('tan', (x: number) => math.tan(degToRad(x)));
-        p.set('asin', (x: number) => radToDeg(math.asin(x)));
-        p.set('acos', (x: number) => radToDeg(math.acos(x)));
-        p.set('atan', (x: number) => radToDeg(math.atan(x)));
+        p.evaluate('sin(x) = sin(degToRad(x))');
+        p.evaluate('cos(x) = cos(degToRad(x))');
+        p.evaluate('tan(x) = tan(degToRad(x))');
+        p.evaluate('asin(x) = radToDeg(asin(x))');
+        p.evaluate('acos(x) = radToDeg(acos(x))');
+        p.evaluate('atan(x) = radToDeg(atan(x))');
     } else if (angleMode === 'grad') {
-        p.set('sin', (x: number) => math.sin(gradToRad(x)));
-        p.set('cos', (x: number) => math.cos(gradToRad(x)));
-        p.set('tan', (x: number) => math.tan(gradToRad(x)));
-        p.set('asin', (x: number) => radToGrad(math.asin(x)));
-        p.set('acos', (x: number) => radToGrad(math.acos(x)));
-        p.set('atan', (x: number) => radToGrad(math.atan(x)));
-    } else { // rad
-        p.set('sin', math.sin);
-        p.set('cos', math.cos);
-        p.set('tan', math.tan);
-        p.set('asin', math.asin);
-        p.set('acos', math.acos);
-        p.set('atan', math.atan);
+        p.evaluate('sin(x) = sin(gradToRad(x))');
+        p.evaluate('cos(x) = cos(gradToRad(x))');
+        p.evaluate('tan(x) = tan(gradToRad(x))');
+        p.evaluate('asin(x) = radToGrad(asin(x))');
+        p.evaluate('acos(x) = radToGrad(acos(x))');
+        p.evaluate('atan(x) = radToGrad(atan(x))');
     }
-    p.set('log', (x:number) => math.log(x, 10));
-    p.set('ln', math.log);
-
     return p;
   }, [angleMode]);
 
   useEffect(() => {
     if (expressionToLoad) {
       setExpression(expressionToLoad.expression);
-      setResult('');
+      setDisplayValue(expressionToLoad.expression);
+      setResult(null);
       onExpressionLoaded();
     }
   }, [expressionToLoad, onExpressionLoaded]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
-    setTimeout(() => {
-      setToastMessage('');
-    }, 2000);
+    setTimeout(() => setToastMessage(''), 2000);
   };
 
   const handleInput = useCallback((value: string) => {
     setError(null);
-    setResult('');
-    setExpression(prev => {
-      if (prev === '0' || prev === 'Error') {
-        return value;
-      }
-      return prev + value;
-    });
-  }, []);
+    if (result !== null) { // Start new calculation after '='
+        setExpression(value);
+        setDisplayValue(value);
+        setResult(null);
+    } else {
+        setDisplayValue(prev => {
+            if (prev === '0' && value !== '.') return value;
+            if (['+', '−', '×', '÷', '%'].includes(value) && ['+', '−', '×', '÷', '%'].includes(prev.slice(-1))) {
+                return prev.slice(0, -1) + value;
+            }
+            return prev + value;
+        });
+    }
+    if (isSecond) setIsSecond(false);
+  }, [result, isSecond]);
 
+  const handleFunction = useCallback((func: string, displayFunc?: string) => {
+    setError(null);
+    const display = displayFunc || func;
+    if (result !== null) {
+        setExpression(`${func}${result})`);
+        setDisplayValue(`${display}${result})`);
+        setResult(null);
+    } else {
+        setDisplayValue(prev => {
+            if(prev === '0') return `${display}`;
+            return `${prev}${display}`;
+        });
+    }
+    if (isSecond) setIsSecond(false);
+  }, [result, isSecond]);
+  
   const clear = useCallback(() => {
-    setExpression('0');
-    setResult('');
+    setExpression('');
+    setDisplayValue('0');
+    setResult(null);
     setError(null);
     setExplanation(null);
+    setIsSecond(false);
   }, []);
   
   const backspace = useCallback(() => {
-    setExpression(prev => {
-      if (prev.length > 1 && prev !== 'Error') {
-        return prev.slice(0, -1);
-      }
-      return '0';
-    });
-  }, []);
+    setError(null);
+    if (result !== null) {
+        clear();
+        return;
+    }
+    setDisplayValue(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
+  }, [result, clear]);
 
   const calculate = useCallback(async () => {
-    if (expression === 'Error' || isLoading) return;
+    if (error || isLoading) return;
+    
+    let exprToEvaluate = displayValue;
+    if (expression && displayValue.match(/^[0-9.]+$/) && !['+', '−', '×', '÷', '%'].some(op => expression.endsWith(op))) {
+        exprToEvaluate = expression + displayValue;
+    } else {
+        setExpression(displayValue);
+    }
+    
+    setError(null);
     try {
-      const sanitizedExpression = expression
+      const sanitizedExpression = exprToEvaluate
         .replace(/π/g, 'pi')
         .replace(/√/g, 'sqrt')
+        .replace(/∛/g, 'cbrt')
         .replace(/×/g, '*')
         .replace(/÷/g, '/')
         .replace(/−/g, '-');
@@ -129,180 +169,186 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
       const evalResult = parser.evaluate(sanitizedExpression);
       const resultStr = String(parseFloat(evalResult.toFixed(10)));
       
-      addToHistory({
-        expression: expression,
-        result: resultStr,
-        timestamp: new Date().toISOString(),
-      });
-      
+      const newHistoryEntry = { expression: exprToEvaluate, result: resultStr, timestamp: new Date().toISOString() };
+      addToHistory(newHistoryEntry);
+      setTickerHistory(prev => [newHistoryEntry, ...prev].slice(0, 5));
       setResult(resultStr);
       
       setIsLoading(true);
-      setError(null);
       setExplanation(null);
       const expl = await getFormulaExplanation(sanitizedExpression);
       setExplanation(expl);
-
     } catch (e) {
       setError('Invalid Expression');
-      setExpression('Error');
+      setResult(null);
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
+      setIsSecond(false);
     }
-  }, [expression, isLoading, addToHistory, parser]);
+  }, [displayValue, expression, error, isLoading, addToHistory, parser]);
 
-    const memoryClear = () => setMemory(0);
-    const memoryRecall = () => handleInput(String(memory));
-    const memoryStore = () => {
-        try {
-            const currentVal = parser.evaluate(expression);
-            setMemory(currentVal);
-            showToast("Value stored in memory");
-        } catch {
-            setError("Cannot store invalid expression");
-            setExpression("Error");
-        }
-    };
-    const memoryAdd = () => {
-        try {
-            const currentVal = parser.evaluate(expression);
-            setMemory(prev => prev + currentVal);
-            showToast("Value added to memory");
-        } catch {
-            setError("Cannot add invalid expression");
-            setExpression("Error");
-        }
-    };
-    const memorySubtract = () => {
-        try {
-            const currentVal = parser.evaluate(expression);
-            setMemory(prev => prev - currentVal);
-            showToast("Value subtracted from memory");
-        } catch {
-            setError("Cannot subtract invalid expression");
-            setExpression("Error");
-        }
-    };
-
-    const handleKeyDown = useCallback((event: KeyboardEvent) => {
-        if (event.target instanceof HTMLInputElement || 
-            event.target instanceof HTMLTextAreaElement ||
-            event.target instanceof HTMLSelectElement) {
-            return;
-        }
-    
-        if (event.ctrlKey && (event.key === 'c' || event.key === 'C')) {
-            event.preventDefault();
-            const textToCopy = result || (expression !== '0' && expression !== 'Error' ? expression : '');
-            if (textToCopy) {
-                navigator.clipboard.writeText(textToCopy);
-                showToast('Copied to clipboard!');
-            }
-            return;
-        }
-        
-        if (event.ctrlKey || event.altKey || event.metaKey) {
-            return;
-        }
-    
-        let keyHandled = true;
-    
-        if (/[0-9]/.test(event.key)) {
-            handleInput(event.key);
-        } else if (['+', '-', '*', '/', '.', '(', ')', '^', '%', '!'].includes(event.key)) {
-            let value = event.key;
-            if (event.key === '*') value = '×';
-            if (event.key === '/') value = '÷';
-            if (event.key === '-') value = '−';
-            handleInput(value);
-        } else {
-            switch (event.key) {
-                case 'Enter': case '=': calculate(); break;
-                case 'Escape': clear(); break;
-                case 'Backspace': backspace(); break;
-                case 'p': handleInput('π'); break;
-                case 'e': handleInput('e'); break;
-                default: keyHandled = false;
-            }
-        }
-        
-        if (keyHandled) event.preventDefault();
-      }, [calculate, clear, backspace, handleInput, expression, result]);
-    
-      useEffect(() => {
-        document.addEventListener('keydown', handleKeyDown);
-        return () => document.removeEventListener('keydown', handleKeyDown);
-      }, [handleKeyDown]);
-
-
-  const buttons = [
-    { label: 'sin', action: () => handleInput('sin('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'cos', action: () => handleInput('cos('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'tan', action: () => handleInput('tan('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'log', action: () => handleInput('log('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'ln', action: () => handleInput('ln('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: '(', action: () => handleInput('('), style: 'bg-gray-600 hover:bg-gray-500' },
-    { label: ')', action: () => handleInput(')'), style: 'bg-gray-600 hover:bg-gray-500' },
-    { label: 'asin', action: () => handleInput('asin('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'acos', action: () => handleInput('acos('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'atan', action: () => handleInput('atan('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: '√', action: () => handleInput('sqrt('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'x²', action: () => handleInput('^2'), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'xʸ', action: () => handleInput('^'), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'AC', action: clear, style: 'bg-red-500/80 hover:bg-red-500' },
-    { label: 'sinh', action: () => handleInput('sinh('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'cosh', action: () => handleInput('cosh('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'tanh', action: () => handleInput('tanh('), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: '7', action: () => handleInput('7'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '8', action: () => handleInput('8'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '9', action: () => handleInput('9'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '÷', action: () => handleInput('÷'), style: 'bg-brand-secondary hover:bg-orange-500' },
-    { label: 'e', action: () => handleInput('e'), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: 'π', action: () => handleInput('π'), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: '!', action: () => handleInput('!'), style: 'bg-brand-primary/80 hover:bg-brand-primary' },
-    { label: '4', action: () => handleInput('4'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '5', action: () => handleInput('5'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '6', action: () => handleInput('6'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '×', action: () => handleInput('×'), style: 'bg-brand-secondary hover:bg-orange-500' },
-    { label: 'MC', action: memoryClear, style: 'bg-teal-600 hover:bg-teal-500' },
-    { label: 'MR', action: memoryRecall, style: 'bg-teal-600 hover:bg-teal-500' },
-    { label: 'MS', action: memoryStore, style: 'bg-teal-600 hover:bg-teal-500' },
-    { label: '1', action: () => handleInput('1'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '2', action: () => handleInput('2'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '3', action: () => handleInput('3'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '−', action: () => handleInput('−'), style: 'bg-brand-secondary hover:bg-orange-500' },
-    { label: 'M+', action: memoryAdd, style: 'bg-teal-600 hover:bg-teal-500' },
-    { label: 'M-', action: memorySubtract, style: 'bg-teal-600 hover:bg-teal-500' },
-    { label: 'del', action: backspace, style: 'bg-gray-600 hover:bg-gray-500' },
-    { label: '0', action: () => handleInput('0'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '.', action: () => handleInput('.'), style: 'bg-brand-surface hover:bg-gray-600' },
-    { label: '=', action: calculate, style: 'bg-brand-accent hover:bg-green-500' },
-    { label: '+', action: () => handleInput('+'), style: 'bg-brand-secondary hover:bg-orange-500' },
-  ];
+  const memoryClear = () => { setMemory(null); showToast("Memory cleared"); };
+  const memoryRecall = () => { if(memory !== null) { setDisplayValue(String(memory)); setResult(null); } };
+  const memoryStore = () => {
+    const valToStore = result ? parseFloat(result) : parseFloat(displayValue);
+    if (!isNaN(valToStore)) {
+        setMemory(valToStore);
+        showToast("Value stored in memory");
+    }
+  };
+  const memoryAdd = () => {
+    const currentVal = result ? parseFloat(result) : parseFloat(displayValue);
+     if (!isNaN(currentVal)) {
+        setMemory(prev => (prev || 0) + currentVal);
+        showToast("Value added to memory");
+    }
+  };
+  const memorySubtract = () => {
+    const currentVal = result ? parseFloat(result) : parseFloat(displayValue);
+    if (!isNaN(currentVal)) {
+        setMemory(prev => (prev || 0) - currentVal);
+        showToast("Value subtracted from memory");
+    }
+  };
   
+  const handleOp = (op: string) => {
+    setError(null);
+    if (result !== null) {
+      setExpression(result + op);
+      setDisplayValue(result + op);
+      setResult(null);
+    } else {
+      setExpression(displayValue + op);
+      setDisplayValue(displayValue + op);
+    }
+  };
+
+  const getStyle = (styleType?: string, active?: boolean) => {
+    if (active) return 'bg-brand-primary text-white';
+    switch (styleType) {
+        case 'op': return 'bg-brand-secondary hover:bg-orange-500 text-white';
+        case 'mem': return 'bg-teal-600 hover:bg-teal-500 text-white';
+        case 'clear': return 'bg-red-500/80 hover:bg-red-500 text-white';
+        case 'num': return 'bg-brand-surface hover:bg-gray-600 text-brand-text';
+        case 'func':
+        default: return 'bg-brand-primary/80 hover:bg-brand-primary text-white';
+    }
+  };
+
+  const buttonGrid: { label: string, secondLabel?: string, action: any, secondAction?: any, style: string, colSpan?: number, active?: boolean }[][] = [
+      [
+          { label: '2nd', action: () => setIsSecond(s => !s), style: 'func', active: isSecond },
+          { label: 'π', action: () => handleInput('π'), style: 'func' },
+          { label: 'e', action: () => handleInput('e'), style: 'func' },
+          { label: 'AC', action: clear, style: 'clear' },
+          { label: 'del', action: backspace, style: 'clear' },
+      ],
+      [
+          { label: 'x²', secondLabel: 'x³', action: () => handleInput('^2'), secondAction: () => handleInput('^3'), style: 'func' },
+          { label: '1/x', secondLabel: 'rand', action: () => handleInput('^(-1)'), secondAction: () => setDisplayValue(String(Math.random())), style: 'func' },
+          { label: '√', secondLabel: '∛', action: () => handleFunction('sqrt(', '√('), secondAction: () => handleFunction('cbrt(', '∛('), style: 'func' },
+          { label: '(', action: () => handleInput('('), style: 'func' },
+          { label: ')', action: () => handleInput(')'), style: 'func' },
+      ],
+      [
+          { label: 'sin', secondLabel: 'asin', action: () => handleFunction('sin('), secondAction: () => handleFunction('asin('), style: 'func' },
+          { label: 'cos', secondLabel: 'acos', action: () => handleFunction('cos('), secondAction: () => handleFunction('acos('), style: 'func' },
+          { label: 'tan', secondLabel: 'atan', action: () => handleFunction('tan('), secondAction: () => handleFunction('atan('), style: 'func' },
+          { label: 'log', secondLabel: 'log₂', action: () => handleFunction('log('), secondAction: () => handleFunction('log2('), style: 'func' },
+          { label: 'ln', action: () => handleFunction('ln('), style: 'func' },
+      ],
+      [
+          { label: 'sinh', secondLabel: 'asinh', action: () => handleFunction('sinh('), secondAction: () => handleFunction('asinh('), style: 'func' },
+          { label: 'cosh', secondLabel: 'acosh', action: () => handleFunction('cosh('), secondAction: () => handleFunction('acosh('), style: 'func' },
+          { label: 'tanh', secondLabel: 'atanh', action: () => handleFunction('tanh('), secondAction: () => handleFunction('atanh('), style: 'func' },
+          { label: 'nCr', action: () => handleFunction('nCr('), style: 'func' },
+          { label: 'nPr', action: () => handleFunction('nPr('), style: 'func' },
+      ],
+       [
+          { label: '7', action: () => handleInput('7'), style: 'num' },
+          { label: '8', action: () => handleInput('8'), style: 'num' },
+          { label: '9', action: () => handleInput('9'), style: 'num' },
+          { label: '÷', action: () => handleOp('÷'), style: 'op' },
+          { label: 'MC', action: memoryClear, style: 'mem' },
+      ],
+      [
+          { label: '4', action: () => handleInput('4'), style: 'num' },
+          { label: '5', action: () => handleInput('5'), style: 'num' },
+          { label: '6', action: () => handleInput('6'), style: 'num' },
+          { label: '×', action: () => handleOp('×'), style: 'op' },
+          { label: 'MR', action: memoryRecall, style: 'mem' },
+      ],
+      [
+          { label: '1', action: () => handleInput('1'), style: 'num' },
+          { label: '2', action: () => handleInput('2'), style: 'num' },
+          { label: '3', action: () => handleInput('3'), style: 'num' },
+          { label: '−', action: () => handleOp('−'), style: 'op' },
+          { label: 'M+', action: memoryAdd, style: 'mem' },
+      ],
+      [
+          { label: '0', action: () => handleInput('0'), style: 'num', colSpan: 2 },
+          { label: '.', action: () => handleInput('.'), style: 'num' },
+          { label: '+', action: () => handleOp('+'), style: 'op' },
+          { label: 'M-', action: memorySubtract, style: 'mem' },
+      ],
+      [
+          { label: '%', action: () => handleInput('%'), style: 'func' },
+          { label: 'EE', action: () => handleInput('e'), style: 'func' },
+          { label: '=', action: calculate, style: 'op', colSpan: 3 },
+      ]
+  ];
+
   const angleModes: { id: AngleMode, label: string }[] = [{ id: 'deg', label: 'DEG' }, { id: 'rad', label: 'RAD' }, { id: 'grad', label: 'GRAD' }];
 
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
-          <div className="bg-gray-900/50 dark:bg-brand-bg rounded-lg p-4 mb-4 text-right min-h-[110px] flex flex-col justify-between relative border border-brand-border">
-              <div className="absolute top-2 left-3 text-brand-primary font-bold text-xs">{angleMode.toUpperCase()}</div>
-              {memory !== 0 && <div className="absolute top-2 left-14 text-teal-400 font-bold text-xs">M</div>}
-              <div className="text-brand-text-secondary text-2xl break-words h-8 overflow-x-auto text-right">{expression}</div>
-              <div className="text-4xl font-bold text-brand-text break-words h-12 overflow-x-auto text-right">{result}</div>
+            <div className="bg-gray-900/50 rounded-lg p-4 mb-4 text-right min-h-[160px] flex flex-col justify-between relative border border-brand-border">
+              {/* Ticker Tape History */}
+              <div className="h-16 overflow-y-auto text-right text-sm text-brand-text-secondary pr-1">
+                  {tickerHistory.map((item, index) => (
+                      <div key={index} className="opacity-70">
+                          <span>{item.expression} = </span>
+                          <span className="font-semibold">{item.result}</span>
+                      </div>
+                  ))}
+              </div>
+
+              {/* Main Display */}
+              <div className="border-t border-brand-border/50 pt-2">
+                  <div className="absolute top-2 left-3 flex items-center gap-4 text-xs font-bold z-10">
+                      {isSecond && <span className="bg-yellow-500 text-black px-1.5 py-0.5 rounded">2nd</span>}
+                      <span className="text-brand-primary">{angleMode.toUpperCase()}</span>
+                      {memory !== null && <span className="text-teal-400">M</span>}
+                  </div>
+                  <div className="text-brand-text-secondary text-xl break-words h-7 overflow-x-auto text-right font-mono">{expression}</div>
+                  <div className="text-4xl font-bold text-brand-text break-words h-12 overflow-x-auto text-right font-mono">
+                      {result ?? displayValue}
+                  </div>
+                  {error && <div className="text-red-400 text-sm font-semibold h-5 text-right">{error}</div>}
+              </div>
           </div>
-          <div className="flex justify-center gap-2 mb-4">
+          
+           <div className="grid grid-cols-5 gap-2">
+            {buttonGrid.flat().map((b, index) => (
+                <div key={index} className={b.colSpan ? `col-span-${b.colSpan}` : 'col-span-1'}>
+                    <Button
+                        onClick={isSecond && b.secondAction ? b.secondAction : b.action}
+                        className={`${getStyle(b.style, b.active)} h-12 text-base w-full`}
+                    >
+                        {isSecond && b.secondLabel ? b.secondLabel : b.label}
+                    </Button>
+                </div>
+            ))}
+            </div>
+            
+           <div className="flex justify-center gap-2 mt-4">
               {angleModes.map(mode => (
-                  <button key={mode.id} onClick={() => setAngleMode(mode.id)} className={`px-4 py-1 rounded-full text-sm font-semibold transition-colors ${angleMode === mode.id ? 'bg-brand-primary text-white' : 'bg-brand-surface hover:bg-gray-600 dark:hover:bg-brand-border'}`}>
+                  <button key={mode.id} onClick={() => setAngleMode(mode.id)} className={`px-4 py-1 rounded-full text-sm font-semibold transition-colors ${angleMode === mode.id ? 'bg-brand-primary text-white' : 'bg-brand-surface hover:bg-gray-600'}`}>
                       {mode.label}
                   </button>
               ))}
-          </div>
-          <div className="grid grid-cols-7 gap-2">
-            {buttons.map(b => (
-              <Button key={b.label} onClick={b.action} className={`${b.style} h-14 text-xl`} ariaLabel={b.label}>{b.label}</Button>
-            ))}
           </div>
         </div>
         
@@ -311,8 +357,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
                 <h3 className="text-2xl font-bold mb-4 flex items-center gap-2 text-brand-primary"><Brain /> Formula Explorer</h3>
                 <div className="min-h-[200px] relative">
                     {isLoading && <div className="absolute inset-0 flex flex-col items-center justify-center bg-brand-surface/50 rounded-lg"><Loader className="animate-spin text-brand-primary" size={48} /><p className="mt-4 text-brand-text-secondary">Gemini is thinking...</p></div>}
-                    {!isLoading && error && <div className="text-center p-4"><XCircle className="mx-auto text-red-500" size={48} /><p className="mt-4 font-semibold text-red-400">Calculation Error</p><p className="text-brand-text-secondary">{error}</p></div>}
-                    {!isLoading && !error && explanation && <div className="space-y-4"><h4 className="text-xl font-semibold text-brand-accent">{explanation.functionName}</h4><div><p className="font-mono bg-gray-900/70 dark:bg-brand-bg p-3 rounded-md text-brand-secondary break-words">{explanation.formula}</p></div><p className="text-brand-text-secondary">{explanation.description}</p><div><p className="font-semibold">Example:</p><p className="text-brand-text-secondary italic">{explanation.example}</p></div></div>}
+                    {!isLoading && !error && explanation && <div className="space-y-4"><h4 className="text-xl font-semibold text-brand-accent">{explanation.functionName}</h4><div><p className="font-mono bg-brand-bg p-3 rounded-md text-brand-secondary break-words">{explanation.formula}</p></div><p className="text-brand-text-secondary">{explanation.description}</p><div><p className="font-semibold">Example:</p><p className="text-brand-text-secondary italic">{explanation.example}</p></div></div>}
                     {!isLoading && !error && !explanation && <div className="text-center text-brand-text-secondary pt-16"><p>Perform a calculation to see a formula explanation here.</p></div>}
                 </div>
             </div>
@@ -325,14 +370,14 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
                                 <span className="font-semibold">{c.name}</span>
                                 <span className="text-sm text-brand-text-secondary ml-2">{`(${c.symbol})`}</span>
                             </div>
-                            <span className="font-mono text-brand-accent">{c.value}</span>
+                            <span className="font-mono text-brand-accent text-sm">{c.value}</span>
                         </div>
                     ))}
                 </div>
             </div>
         </div>
       </div>
-      {toastMessage && <div className="fixed bottom-6 right-6 bg-brand-accent text-white px-5 py-3 rounded-lg shadow-2xl z-50">{toastMessage}</div>}
+      {toastMessage && <div className="fixed bottom-6 right-6 bg-brand-accent text-white px-5 py-3 rounded-lg shadow-2xl z-50 animate-fade-in-down">{toastMessage}</div>}
     </>
   );
 };

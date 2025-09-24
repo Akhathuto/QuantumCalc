@@ -24,5 +24,6 @@ export type AppTab =
   | 'base'
   | 'financial'
   | 'date'
+  | 'health'
   | 'history'
   | 'about';
