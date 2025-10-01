@@ -18,7 +18,8 @@ import {
   HeartPulse,
   MoreHorizontal,
   FileText,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  HelpCircle,
 } from 'lucide-react';
 
 import Logo from './Logo';
@@ -99,6 +100,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabClick }) => {
             onTabClick={onTabClick}
             subTabs={[
               { id: 'history', label: 'History', Icon: History },
+              { id: 'help', label: 'Help & FAQ', Icon: HelpCircle },
               { id: 'about', label: 'About', Icon: Info },
               { id: 'settings', label: 'Settings', Icon: SettingsIcon },
               { id: 'terms', label: 'Terms & License', Icon: FileText },

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from './components/common/Header';
 import Calculator from './components/Calculator';
@@ -17,6 +16,7 @@ import HealthCalculator from './components/HealthCalculator';
 import About from './components/About';
 import TermsAndLicense from './components/TermsAndLicense';
 import Settings from './components/Settings';
+import Help from './components/Help';
 import { AppTab, HistoryEntry } from './types';
 
 const App: React.FC = () => {
@@ -96,7 +96,9 @@ const App: React.FC = () => {
         return <HealthCalculator />;
       case 'history':
         return <History history={history} loadFromHistory={loadFromHistory} clearHistory={clearHistory} toggleFavorite={toggleFavorite} />;
-      case 'about':
+      case 'help':
+        return <Help />;
+        case 'about':
         return <About />;
       case 'settings':
         return <Settings />;

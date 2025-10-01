@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Landmark, PiggyBank, HandCoins, Car, Home, Percent, Calendar, University, Briefcase, TrendingUp, Receipt, FileText, Bot, Banknote } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Area } from 'recharts';
 import CustomDropdown from './common/CustomDropdown';
 
 // --- Reusable UI ---
@@ -43,6 +44,51 @@ interface CalculatorProps {
   currency: string;
 }
 
+const CustomTooltip = ({ active, payload, label, currency }: any) => {
+    if (active && payload && payload.length) {
+        // Compound Interest Chart (stacked areas)
+        if (payload.length > 1) { 
+             return (
+                <div className="bg-brand-surface/90 p-3 border border-brand-border rounded-lg shadow-lg">
+                    <p className="font-bold text-brand-text mb-2">{`Year: ${label}`}</p>
+                    {payload.map((pld: any) => (
+                        <div key={pld.dataKey} style={{ color: pld.color }} className="flex justify-between gap-4">
+                            <span>{pld.name}:</span>
+                            <span className="font-mono font-semibold">{formatCurrency(parseFloat(pld.value), currency)}</span>
+                        </div>
+                    )).reverse()}
+                </div>
+            );
+        }
+
+        // Loan Chart (single area)
+        const data = payload[0].payload;
+        return (
+            <div className="bg-brand-surface/90 p-3 border border-brand-border rounded-lg shadow-lg">
+                <p className="font-bold text-brand-text mb-2">{label === '0' ? 'Start of Loan' : `End of Year: ${label}`}</p>
+                <div className="flex justify-between gap-4 text-brand-text">
+                    <span>Remaining Balance:</span>
+                    <span className="font-mono font-semibold">{formatCurrency(data['Remaining Balance'], currency)}</span>
+                </div>
+                {label !== '0' && data['Principal Paid (Year)'] !== undefined && (
+                    <>
+                        <div className="flex justify-between gap-4" style={{ color: 'var(--color-accent)' }}>
+                            <span>Principal Paid (This Year):</span>
+                            <span className="font-mono font-semibold">{formatCurrency(data['Principal Paid (Year)'], currency)}</span>
+                        </div>
+                        <div className="flex justify-between gap-4" style={{ color: 'var(--color-secondary)' }}>
+                            <span>Interest Paid (This Year):</span>
+                            <span className="font-mono font-semibold">{formatCurrency(data['Interest Paid (Year)'], currency)}</span>
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    }
+    return null;
+};
+
+
 // --- Individual Calculators ---
 
 const LoanCalculator: React.FC<CalculatorProps> = ({ currency }) => {
@@ -62,30 +108,85 @@ const LoanCalculator: React.FC<CalculatorProps> = ({ currency }) => {
         
         if (i === 0) { // Simple interest-free loan
             const M = P / n;
-            return { monthlyPayment: M, totalInterest: 0, totalPaid: P };
+            return { monthlyPayment: M, totalInterest: 0, totalPaid: P, amortizationData: [] };
         }
         
         const M = P * (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1);
         const totalPaid = M * n;
         const totalInterest = totalPaid - P;
 
-        return { monthlyPayment: M, totalInterest, totalPaid };
+        const amortizationData = [];
+        let balance = P;
+        let yearlyPrincipalPaid = 0;
+        let yearlyInterestPaid = 0;
+
+        amortizationData.push({
+            year: '0',
+            'Remaining Balance': P,
+            'Principal Paid (Year)': 0,
+            'Interest Paid (Year)': 0,
+        });
+
+        for (let month = 1; month <= n; month++) {
+            const interestForMonth = balance * i;
+            const principalForMonth = M - interestForMonth;
+            balance -= principalForMonth;
+            
+            yearlyInterestPaid += interestForMonth;
+            yearlyPrincipalPaid += principalForMonth;
+
+            if (month % 12 === 0 || month === n) {
+                amortizationData.push({
+                    year: String(Math.ceil(month / 12)),
+                    'Remaining Balance': parseFloat(balance > 0 ? balance.toFixed(2) : '0'),
+                    'Principal Paid (Year)': parseFloat(yearlyPrincipalPaid.toFixed(2)),
+                    'Interest Paid (Year)': parseFloat(yearlyInterestPaid.toFixed(2)),
+                });
+                // Reset yearly accumulators
+                yearlyPrincipalPaid = 0;
+                yearlyInterestPaid = 0;
+            }
+        }
+        
+        return { monthlyPayment: M, totalInterest, totalPaid, amortizationData };
     }, [amount, rate, term]);
 
+    const currencySymbol = useMemo(() => new Intl.NumberFormat(undefined, { style: 'currency', currency }).formatToParts(1).find(p => p.type === 'currency')?.value, [currency]);
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            <div className="space-y-4 bg-brand-bg/30 p-4 rounded-lg">
-                <h3 className="text-xl font-bold mb-2">Loan Details</h3>
-                <InputField label="Loan Amount" id="loan-amount" type="number" value={amount} onChange={e => setAmount(e.target.value)} currencySymbol={new Intl.NumberFormat(undefined, { style: 'currency', currency }).formatToParts(1).find(p => p.type === 'currency')?.value} />
-                <InputField label="Annual Interest Rate (%)" id="loan-rate" type="number" value={rate} onChange={e => setRate(e.target.value)} />
-                <InputField label="Loan Term (Years)" id="loan-term" type="number" value={term} onChange={e => setTerm(e.target.value)} />
+        <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <div className="space-y-4 bg-brand-bg/30 p-4 rounded-lg">
+                    <h3 className="text-xl font-bold mb-2">Loan Details</h3>
+                    <InputField label="Loan Amount" id="loan-amount" type="number" value={amount} onChange={e => setAmount(e.target.value)} currencySymbol={currencySymbol} />
+                    <InputField label="Annual Interest Rate (%)" id="loan-rate" type="number" value={rate} onChange={e => setRate(e.target.value)} />
+                    <InputField label="Loan Term (Years)" id="loan-term" type="number" value={term} onChange={e => setTerm(e.target.value)} />
+                </div>
+                <div className="space-y-4">
+                    <ResultCard title="Monthly Payment" value={formatCurrency(result?.monthlyPayment, currency)} description="The amount you'll pay each month." />
+                    <ResultCard title="Total Interest Paid" value={formatCurrency(result?.totalInterest, currency)} description="The total interest paid over the life of the loan." />
+                    <ResultCard title="Total Amount Paid" value={formatCurrency(result?.totalPaid, currency)} description="Principal + Interest" />
+                </div>
             </div>
-            <div className="space-y-4">
-                <ResultCard title="Monthly Payment" value={formatCurrency(result?.monthlyPayment, currency)} description="The amount you'll pay each month." />
-                <ResultCard title="Total Interest Paid" value={formatCurrency(result?.totalInterest, currency)} description="The total interest paid over the life of the loan." />
-                <ResultCard title="Total Amount Paid" value={formatCurrency(result?.totalPaid, currency)} description="Principal + Interest" />
-            </div>
-        </div>
+
+            {result && result.amortizationData.length > 0 && (
+                <div className="mt-8">
+                    <h3 className="text-xl font-bold mb-4 text-center">Loan Balance Over Time</h3>
+                    <div className="h-80 w-full bg-brand-bg/30 p-4 rounded-lg">
+                        <ResponsiveContainer>
+                            <AreaChart data={result.amortizationData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                <XAxis dataKey="year" unit=" yr" stroke="var(--color-text-secondary)" />
+                                <YAxis tickFormatter={(val) => formatCurrency(val, currency).replace(/\.00$/, '')} stroke="var(--color-text-secondary)" width={80} />
+                                <Tooltip content={<CustomTooltip currency={currency} />} />
+                                <Legend />
+                                <Area type="monotone" dataKey="Remaining Balance" stroke="var(--color-primary)" fill="var(--color-primary)" fillOpacity={0.3} />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 
@@ -104,52 +205,90 @@ const CompoundInterestCalculator: React.FC<CalculatorProps> = ({ currency }) => 
         const n = parseInt(frequency);
 
         if (isNaN(P) || isNaN(PMT) || isNaN(r) || isNaN(t) || isNaN(n) || t <= 0 || n <= 0) return null;
-
-        let futureValue;
-        const totalPeriods = n * t;
-
-        if (r === 0) {
-            futureValue = P + PMT * totalPeriods;
-        } else {
-            const ratePerPeriod = r / n;
-            const principalGrowth = P * Math.pow(1 + ratePerPeriod, totalPeriods);
-            const contributionGrowth = PMT * ((Math.pow(1 + ratePerPeriod, totalPeriods) - 1) / ratePerPeriod);
-            futureValue = principalGrowth + contributionGrowth;
-        }
         
-        const totalContributions = P + (PMT * totalPeriods);
+        const growthData = [];
+        const ratePerPeriod = r / n;
+        
+        for (let year = 0; year <= t; year++) {
+            const totalPeriods = n * year;
+            let futureVal;
+
+            const principalPart = P * Math.pow(1 + ratePerPeriod, totalPeriods);
+            
+            if (ratePerPeriod > 0) {
+                 const contributionsPart = PMT * ((Math.pow(1 + ratePerPeriod, totalPeriods) - 1) / ratePerPeriod);
+                 futureVal = principalPart + contributionsPart;
+            } else {
+                futureVal = principalPart + (PMT * totalPeriods);
+            }
+
+            const totalInvested = P + (PMT * totalPeriods);
+            const interest = futureVal - totalInvested;
+
+            growthData.push({
+                year: year,
+                'Initial Principal': P,
+                'Total Contributions': PMT * totalPeriods,
+                'Interest Earned': interest > 0 ? interest : 0,
+            });
+        }
+
+        const finalDataPoint = growthData[growthData.length - 1];
+        const futureValue = finalDataPoint['Initial Principal'] + finalDataPoint['Total Contributions'] + finalDataPoint['Interest Earned'];
+        const totalContributions = P + (PMT * n * t);
         const totalInterest = futureValue - totalContributions;
         
-        return { futureValue, totalContributions, totalInterest };
+        return { futureValue, totalContributions, totalInterest, growthData };
 
     }, [principal, contribution, rate, term, frequency]);
     
-    const currencySymbol = new Intl.NumberFormat(undefined, { style: 'currency', currency }).formatToParts(1).find(p => p.type === 'currency')?.value;
+    const currencySymbol = useMemo(() => new Intl.NumberFormat(undefined, { style: 'currency', currency }).formatToParts(1).find(p => p.type === 'currency')?.value, [currency]);
 
     return (
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            <div className="space-y-4 bg-brand-bg/30 p-4 rounded-lg">
-                <h3 className="text-xl font-bold mb-2">Investment Details</h3>
-                <InputField label="Initial Principal" id="ci-principal" type="number" value={principal} onChange={e => setPrincipal(e.target.value)} currencySymbol={currencySymbol} />
-                <InputField label="Periodic Contribution" id="ci-contribution" type="number" value={contribution} onChange={e => setContribution(e.target.value)} currencySymbol={currencySymbol} />
-                <InputField label="Annual Interest Rate (%)" id="ci-rate" type="number" value={rate} onChange={e => setRate(e.target.value)} />
-                <InputField label="Investment Term (Years)" id="ci-term" type="number" value={term} onChange={e => setTerm(e.target.value)} />
-                <div>
-                  <label htmlFor="ci-frequency" className="block text-sm font-medium text-brand-text-secondary mb-1">Compounding Frequency</label>
-                  <select id="ci-frequency" value={frequency} onChange={e => setFrequency(e.target.value)} className="w-full bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary">
-                    <option value="365">Daily</option>
-                    <option value="12">Monthly</option>
-                    <option value="4">Quarterly</option>
-                    <option value="1">Annually</option>
-                  </select>
+        <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <div className="space-y-4 bg-brand-bg/30 p-4 rounded-lg">
+                    <h3 className="text-xl font-bold mb-2">Investment Details</h3>
+                    <InputField label="Initial Principal" id="ci-principal" type="number" value={principal} onChange={e => setPrincipal(e.target.value)} currencySymbol={currencySymbol} />
+                    <InputField label="Periodic Contribution" id="ci-contribution" type="number" value={contribution} onChange={e => setContribution(e.target.value)} currencySymbol={currencySymbol} />
+                    <InputField label="Annual Interest Rate (%)" id="ci-rate" type="number" value={rate} onChange={e => setRate(e.target.value)} />
+                    <InputField label="Investment Term (Years)" id="ci-term" type="number" value={term} onChange={e => setTerm(e.target.value)} />
+                    <div>
+                    <label htmlFor="ci-frequency" className="block text-sm font-medium text-brand-text-secondary mb-1">Compounding Frequency</label>
+                    <select id="ci-frequency" value={frequency} onChange={e => setFrequency(e.target.value)} className="w-full bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary">
+                        <option value="365">Daily</option>
+                        <option value="12">Monthly</option>
+                        <option value="4">Quarterly</option>
+                        <option value="1">Annually</option>
+                    </select>
+                    </div>
+                </div>
+                <div className="space-y-4">
+                    <ResultCard title="Future Value" value={formatCurrency(result?.futureValue, currency)} description="The total value of your investment at the end of the term." />
+                    <ResultCard title="Total Contributions" value={formatCurrency(result?.totalContributions, currency)} description="Principal + all periodic contributions." />
+                    <ResultCard title="Total Interest Earned" value={formatCurrency(result?.totalInterest, currency)} description="The profit earned from compounding." />
                 </div>
             </div>
-            <div className="space-y-4">
-                <ResultCard title="Future Value" value={formatCurrency(result?.futureValue, currency)} description="The total value of your investment at the end of the term." />
-                <ResultCard title="Total Contributions" value={formatCurrency(result?.totalContributions, currency)} description="Principal + all periodic contributions." />
-                <ResultCard title="Total Interest Earned" value={formatCurrency(result?.totalInterest, currency)} description="The profit earned from compounding." />
-            </div>
-        </div>
+            {result && result.growthData.length > 0 && (
+                <div className="mt-8">
+                    <h3 className="text-xl font-bold mb-4 text-center">Investment Growth Over Time</h3>
+                    <div className="h-80 w-full bg-brand-bg/30 p-4 rounded-lg">
+                        <ResponsiveContainer>
+                            <AreaChart data={result.growthData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                <XAxis dataKey="year" unit=" yr" stroke="var(--color-text-secondary)" />
+                                <YAxis tickFormatter={(val) => formatCurrency(val, currency).replace(/\.00$/, '')} stroke="var(--color-text-secondary)" width={80} />
+                                <Tooltip content={<CustomTooltip currency={currency} />} />
+                                <Legend />
+                                <Area type="monotone" dataKey="Initial Principal" stackId="1" stroke="#9f7aea" fill="#9f7aea" />
+                                <Area type="monotone" dataKey="Total Contributions" stackId="1" stroke="#4299e1" fill="#4299e1" />
+                                <Area type="monotone" dataKey="Interest Earned" stackId="1" stroke="#48bb78" fill="#48bb78" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 

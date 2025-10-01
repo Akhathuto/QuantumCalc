@@ -33,4 +33,5 @@ export type AppTab =
   | 'history'
   | 'about'
   | 'terms'
-  | 'settings';
+  | 'settings'
+  | 'help';
