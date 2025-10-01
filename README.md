@@ -7,13 +7,6 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-blue?logo=tailwindcss)](https://tailwindcss.com/)
 [![Gemini API](https://img.shields.io/badge/Gemini_API-Google-blue?logo=google)](https://ai.google.dev/)
 
-| Scientific Calculator & Gemini Explorer | Advanced Graphing Suite |
-| :-------------------------------------: | :---------------------: |
-| ![Scientific Calculator](https://via.placeholder.com/600x300.png?text=Scientific+Calculator) | ![Advanced Graphing Suite](https://via.placeholder.com/600x300.png?text=Graphing+Suite) |
-| **Financial & Health Tools** | **Converters & Math Tools** |
-| ![Financial & Health Tools](https://via.placeholder.com/600x300.png?text=Financial+%26+Health+Tools) | ![Converters & Math Tools](https://via.placeholder.com/600x300.png?text=Converters+%26+Math+Tools) |
-
-
 QuantumCalc is a comprehensive, web-based suite of calculators and tools designed for students, professionals, and anyone in need of powerful, accessible calculation capabilities. It combines a professional-grade scientific calculator with a wide range of specialized tools for data analysis, finance, health, and everyday conversions.
 
 ---
@@ -75,61 +68,90 @@ QuantumCalc is more than one calculator—it's a massive collection of specializ
 
 ## Getting Started
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+Welcome! To get QuantumCalc running on your local machine, you'll need to serve the files using a local web server. **You cannot simply open the `index.html` file directly in your browser.**
 
-### Prerequisites
+Here's a quick guide for developers, followed by a more detailed step-by-step walkthrough.
 
-- A modern web browser that supports ES Modules.
-- A code editor (e.g., [Visual Studio Code](https://code.visualstudio.com/)).
-- [Node.js](https://nodejs.org/) (recommended for the easiest setup).
+### Quick Start (For Developers)
 
-### Installation
+```bash
+# 1. Clone the repo
+git clone https://github.com/your-repo/quantum-calc.git
+cd quantum-calc
 
-1.  **Clone the repository:**
-    Open your terminal and run the following command to clone the project files to your local machine.
-    ```bash
-    git clone https://github.com/your-repo/quantum-calc.git
-    cd quantum-calc
-    ```
-    *(Note: Replace `https://github.com/your-repo/quantum-calc.git` with the actual repository URL if you have it.)*
+# 2. Start a local server (requires Node.js)
+npx serve
 
-2.  **Set up your Gemini API Key:**
-    The AI features of this application (like the Formula Explorer) are powered by the Google Gemini API. You can set up your key in one of two ways:
+# 3. Open the app in your browser (usually http://localhost:3000)
+# 4. Navigate to More > Settings and add your Google Gemini API key.
+```
 
-    **Option A: In-App Settings (Recommended)**
-    - Once the application is running, navigate to **More > Settings**.
-    - Obtain your free API key from [Google AI Studio](https://ai.google.dev/).
-    - Paste your key into the input field and click "Save". The key will be stored securely in your browser's local storage.
+---
 
-    **Option B: For Developers (Environment Variable)**
-    - If you are deploying the application or running it in a development environment where you control environment variables, you can set a fallback key.
-    - The application will read an environment variable named `API_KEY`. The in-app setting will always override this fallback key if it's set by a user.
+### Step-by-Step Guide
 
-3.  **Run the application locally:**
-    This project uses modern JavaScript modules, so you need to serve it from a local web server. **You cannot simply open the `index.html` file in your browser from your file system.** Here are a few easy ways to start a local server:
+#### Step 1: Get the Code
 
-    #### Option 1: Using `npx serve` (Recommended)
-    If you have Node.js installed, this is the simplest method. In the project's root directory, run:
-    ```bash
-    npx serve
-    ```
-    This will start a local server. Open your web browser and navigate to the URL it provides (usually `http://localhost:3000`).
+First, you need to get the project files onto your computer.
 
-    #### Option 2: Using a VS Code Extension
-    If you use Visual Studio Code, the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension is an excellent choice.
-    - Install the extension from the VS Code Marketplace.
-    - Right-click the `index.html` file in the Explorer panel and select "Open with Live Server".
+**Option A: Using Git (Recommended)**
+If you have Git installed, open your terminal and run this command:
+```bash
+git clone https://github.com/your-repo/quantum-calc.git
+cd quantum-calc
+```
+*(Note: Replace the URL with the actual repository URL if you have it.)*
 
-    #### Option 3: Using Python's built-in server
-    If you have Python installed, you can run one of the following commands in the project's root directory:
-    ```bash
-    # For Python 3
-    python -m http.server
+**Option B: Download ZIP**
+If you don't use Git, you can download the project as a ZIP file from the repository's main page. Unzip the file to a location of your choice.
 
-    # For Python 2
-    python -m SimpleHTTPServer
-    ```
-    This will start a server, typically on `http://localhost:8000`.
+#### Step 2: Run a Local Web Server
+
+Modern web applications need to be run from a web server for security and functionality reasons. Here are three easy ways to do this from your project folder:
+
+**Option 1: Using `npx serve` (Easiest Method)**
+This is the simplest way if you have [Node.js](https://nodejs.org/) installed.
+1. Open your terminal in the project's root directory (`quantum-calc`).
+2. Run the command:
+   ```bash
+   npx serve
+   ```
+3. Your terminal will show a local address, usually `http://localhost:3000`. Open this URL in your web browser.
+
+**Option 2: Using VS Code's "Live Server" Extension**
+If you use Visual Studio Code:
+1. Install the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension from the VS Code Marketplace.
+2. Open the `quantum-calc` folder in VS Code.
+3. Right-click the `index.html` file in the file explorer and choose "Open with Live Server".
+4. A browser window will automatically open with the application running.
+
+**Option 3: Using Python's Built-in Server**
+If you have Python installed, you can use its simple web server.
+1. Open your terminal in the project's root directory.
+2. Run one of these commands, depending on your Python version:
+   ```bash
+   # For Python 3
+   python -m http.server
+
+   # For Python 2
+   python -m SimpleHTTPServer
+   ```
+3. Open your browser and go to `http://localhost:8000`.
+
+#### Step 3: Set Up Your Gemini API Key
+
+The AI-powered features in QuantumCalc, like the Formula Explorer, require a Google Gemini API key.
+
+1.  **Get your key:** Visit [Google AI Studio](https://ai.google.dev/) to get your free API key.
+2.  **Run the application:** Make sure QuantumCalc is running in your browser using one of the methods from Step 2.
+3.  **Enter the key in settings:**
+    - In the app, navigate to **More > Settings**.
+    - Paste your API key into the input field.
+    - Click **Save**.
+
+Your key is stored securely in your browser's local storage and is never sent to our servers.
+
+*(For developers: The application can also read from a `process.env.API_KEY` environment variable, which is useful for hosted deployments. However, for local use, the in-app setting is the recommended method.)*
 
 ---
 
