@@ -7,7 +7,12 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-blue?logo=tailwindcss)](https://tailwindcss.com/)
 [![Gemini API](https://img.shields.io/badge/Gemini_API-Google-blue?logo=google)](https://ai.google.dev/)
 
-![QuantumCalc Screenshot](https://via.placeholder.com/1200x600.png?text=QuantumCalc+Application+Interface)
+| Scientific Calculator & Gemini Explorer | Advanced Graphing Suite |
+| :-------------------------------------: | :---------------------: |
+| ![Scientific Calculator](https://via.placeholder.com/600x300.png?text=Scientific+Calculator) | ![Advanced Graphing Suite](https://via.placeholder.com/600x300.png?text=Graphing+Suite) |
+| **Financial & Health Tools** | **Converters & Math Tools** |
+| ![Financial & Health Tools](https://via.placeholder.com/600x300.png?text=Financial+%26+Health+Tools) | ![Converters & Math Tools](https://via.placeholder.com/600x300.png?text=Converters+%26+Math+Tools) |
+
 
 QuantumCalc is a comprehensive, web-based suite of calculators and tools designed for students, professionals, and anyone in need of powerful, accessible calculation capabilities. It combines a professional-grade scientific calculator with a wide range of specialized tools for data analysis, finance, health, and everyday conversions.
 
@@ -39,7 +44,7 @@ QuantumCalc is more than one calculator—it's a massive collection of specializ
 ### Core Tools
 - **Scientific Calculator**: Full-featured with a "2nd function" key, memory, constants, and a ticker-tape history.
 - **Graphing Suite**: Multi-mode charting for functions, scatter, bar, and pie charts.
-- **History**: Saves your recent calculations for easy access.
+- **History**: Saves your recent calculations for easy access, with the ability to "favorite" important entries.
 
 ### Mathematical Tools
 - **Matrix Calculator**: Perform matrix operations like addition, multiplication, determinant, inverse, and transpose.
@@ -135,6 +140,28 @@ Follow these instructions to get a copy of the project up and running on your lo
 - **AI Integration**: Google Gemini API
 - **Mathematics Engine**: Math.js
 - **Charting**: Recharts
+
+---
+
+## 🤝 Contributing
+
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+
+1.  **Fork the Project**
+2.  **Create your Feature Branch** (`git checkout -b feature/AmazingFeature`)
+3.  **Commit your Changes** (`git commit -m 'Add some AmazingFeature'`)
+4.  **Push to the Branch** (`git push origin feature/AmazingFeature`)
+5.  **Open a Pull Request**
+
+### Reporting Bugs
+
+If you encounter a bug, please open an issue on the repository. Be sure to include:
+- A clear and descriptive title.
+- A detailed description of the problem, including steps to reproduce it.
+- Screenshots or screen recordings, if applicable.
+- Information about your environment (browser, OS).
 
 ---
 
