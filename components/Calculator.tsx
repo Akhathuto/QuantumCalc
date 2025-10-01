@@ -46,30 +46,98 @@ const SCIENTIFIC_CONSTANTS = [
 ];
 
 const LatexRenderer: React.FC<{ latex: string }> = React.memo(({ latex }) => {
-  // A simple parser for basic LaTeX syntax
-  const parts = latex.split(/(\^\{.*?\}|\_\{.*?\}|\\sqrt\{.*?\}|\\[a-zA-Z]+)/g).filter(Boolean);
+  // A basic recursive parser for a subset of LaTeX to handle nested structures.
+  const parseLatex = (str: string, keyPrefix: string = 'l'): React.ReactNode[] => {
+    const result: React.ReactNode[] = [];
+    let i = 0;
+    let key = 0;
 
-  const renderPart = (part: string, index: number) => {
-    if (part.startsWith('^{')) {
-      return <sup key={index}>{part.substring(2, part.length - 1)}</sup>;
-    }
-    if (part.startsWith('_{')) {
-      return <sub key={index}>{part.substring(2, part.length - 1)}</sub>;
-    }
-    if (part.startsWith('\\sqrt{')) {
-        return <span key={index}>&radic;({part.substring(6, part.length - 1)})</span>;
-    }
-    const symbols: Record<string, string> = {
-        '\\theta': 'θ', '\\pi': 'π', '\\phi': 'φ', '\\Delta': 'Δ', '\\pm': '±', '\\times': '×', '\\div': '÷',
+    const parseGroup = (): string => {
+      let braceCount = 1;
+      let content = '';
+      i++; // Skip opening brace '{'
+      while (i < str.length && braceCount > 0) {
+        if (str[i] === '{') braceCount++;
+        else if (str[i] === '}') braceCount--;
+        
+        if (braceCount > 0) {
+          content += str[i];
+        }
+        i++;
+      }
+      return content;
     };
-    if (symbols[part]) {
-        return <span key={index}>{symbols[part]}</span>;
-    }
-    
-    return <span key={index}>{part}</span>;
-  };
 
-  return <>{parts.map(renderPart)}</>;
+    while (i < str.length) {
+      const char = str[i];
+
+      if (char === '^' || char === '_') {
+        const Tag = char === '^' ? 'sup' : 'sub';
+        i++;
+        let content;
+        if (str[i] === '{') {
+          const groupContent = parseGroup();
+          content = parseLatex(groupContent, `${keyPrefix}-${key}-s`);
+        } else {
+          content = str[i];
+          i++;
+        }
+        result.push(<Tag key={`${keyPrefix}-${key++}`} className="text-[0.7em] mx-px">{content}</Tag>);
+      } else if (char === '\\') {
+        let command = '';
+        i++;
+        while (i < str.length && /[a-zA-Z]/.test(str[i])) {
+          command += str[i];
+          i++;
+        }
+        
+        const symbols: Record<string, string> = {
+          'theta': 'θ', 'pi': 'π', 'phi': 'φ', 'Delta': 'Δ', 'pm': '±',
+          'times': '×', 'div': '÷', 'cdot': '·'
+        };
+
+        if (command === 'sqrt') {
+          let content;
+          if (str[i] === '{') {
+            const groupContent = parseGroup();
+            content = parseLatex(groupContent, `${keyPrefix}-${key}-sqrt`);
+          } else {
+            content = str[i];
+            i++;
+          }
+          result.push(
+            <span key={`${keyPrefix}-${key++}`} className="inline-flex items-center">
+              <span className="text-2xl">&radic;</span>
+              <span className="border-t border-current -ml-1 pl-1">{content}</span>
+            </span>
+          );
+        } else if (command === 'frac') {
+          const numerator = str[i] === '{' ? parseGroup() : '';
+          const denominator = str[i] === '{' ? parseGroup() : '';
+          result.push(
+            <span key={`${keyPrefix}-${key++}`} className="inline-flex flex-col items-center text-center mx-1 leading-none align-middle">
+              <span className="border-b border-current pb-1 px-1">{parseLatex(numerator, `${keyPrefix}-${key}-n`)}</span>
+              <span className="pt-1 px-1">{parseLatex(denominator, `${keyPrefix}-${key}-d`)}</span>
+            </span>
+          );
+        } else if (symbols[command]) {
+          result.push(<span key={`${keyPrefix}-${key++}`}>{symbols[command]}</span>);
+        } else {
+          result.push(<span key={`${keyPrefix}-${key++}`}>\{command}</span>);
+        }
+      } else {
+        let text = '';
+        while (i < str.length && !'\\^_'.includes(str[i])) {
+          text += str[i];
+          i++;
+        }
+        result.push(text);
+      }
+    }
+    return result;
+  };
+  
+  return <>{parseLatex(latex)}</>;
 });
 
 

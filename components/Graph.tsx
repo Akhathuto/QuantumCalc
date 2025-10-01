@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, ScatterChart, Scatter, BarChart, Bar
 } from 'recharts';
 import { create, all } from 'mathjs';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Download } from 'lucide-react';
 
 const math = create(all);
 
@@ -42,13 +43,109 @@ const ErrorDisplay: React.FC<{ error: string | null }> = ({ error }) => {
     );
 };
 
+const ExportButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+    <button
+        onClick={onClick}
+        className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-brand-accent/80 hover:bg-brand-accent text-white rounded-md font-semibold transition-colors"
+    >
+        <Download size={18} /> Export as PNG
+    </button>
+);
+
+// --- Export Logic ---
+const exportToPng = (chartRef: React.RefObject<HTMLDivElement>, fileName: string) => {
+    if (!chartRef.current) return;
+
+    const svg = chartRef.current.querySelector('svg');
+    if (!svg) {
+        console.error("SVG element not found for export.");
+        return;
+    }
+
+    const { width, height } = svg.getBoundingClientRect();
+
+    // Get computed styles for CSS variables to support themes
+    const computedStyle = getComputedStyle(document.documentElement);
+    const cssVariables = [
+        '--color-bg', '--color-surface', '--color-primary', '--color-secondary',
+        '--color-accent', '--color-text', '--color-text-secondary', '--color-border'
+    ];
+    const styles = cssVariables.map(v => `${v}: ${computedStyle.getPropertyValue(v).trim()};`).join('\n');
+    
+    // Serialize SVG and embed styles
+    const svgString = new XMLSerializer().serializeToString(svg);
+    const svgWithStyles = svgString.replace('<svg', `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"`)
+                                   .replace('>', `><style>:root { ${styles} }</style>`);
+
+    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgWithStyles)))}`;
+
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Draw background for transparency issues
+        ctx.fillStyle = computedStyle.getPropertyValue('--color-surface').trim() || '#2d3748';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        // Trigger download
+        const pngUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = pngUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+    img.src = dataUrl;
+};
+
 
 // --- Chart Components ---
 
 const FunctionPlotter: React.FC = () => {
-    const [expression, setExpression] = useState('x^2');
-    const [xMin, setXMin] = useState('-10');
-    const [xMax, setXMax] = useState('10');
+    const LOCAL_STORAGE_KEY = 'graphing_functionPlotter_settings';
+
+    const initialState = useMemo(() => {
+        const defaultState = {
+            expression: 'x^2',
+            xMin: '-10',
+            xMax: '10',
+            title: 'Function Plot',
+            xLabel: 'x-axis',
+            yLabel: 'y-axis',
+            lineColor: '#4299e1',
+        };
+        try {
+            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+            return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
+        } catch (e) {
+            console.error("Failed to load FunctionPlotter state:", e);
+            return defaultState;
+        }
+    }, []);
+
+    const [expression, setExpression] = useState(initialState.expression);
+    const [xMin, setXMin] = useState(initialState.xMin);
+    const [xMax, setXMax] = useState(initialState.xMax);
+    const [title, setTitle] = useState(initialState.title);
+    const [xLabel, setXLabel] = useState(initialState.xLabel);
+    const [yLabel, setYLabel] = useState(initialState.yLabel);
+    const [lineColor, setLineColor] = useState(initialState.lineColor);
+    const chartRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        try {
+            const stateToSave = { expression, xMin, xMax, title, xLabel, yLabel, lineColor };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
+        } catch (e) {
+            console.error("Failed to save FunctionPlotter state:", e);
+        }
+    }, [expression, xMin, xMax, title, xLabel, yLabel, lineColor]);
 
     const { data, error } = useMemo(() => {
         const min = parseFloat(xMin);
@@ -77,41 +174,83 @@ const FunctionPlotter: React.FC = () => {
              return { data: [], error: e.message || 'Invalid function. Use "x" as the variable.' };
         }
     }, [xMin, xMax, expression]);
+    
+    const handleExport = () => exportToPng(chartRef, `${title.replace(/\s+/g, '_') || 'function-plot'}.png`);
 
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-end">
-                <div className="md:col-span-2">
-                    <Input id="function_expr" label="Function y = f(x)" type="text" value={expression} onChange={e => setExpression(e.target.value)} placeholder="e.g., sin(x)" />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 items-end">
+                <Input id="function_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
+                <Input id="function_expr" label="Function y = f(x)" type="text" value={expression} onChange={e => setExpression(e.target.value)} placeholder="e.g., sin(x)" />
                 <div className="grid grid-cols-2 gap-2">
                     <Input id="function_xmin" label="X Min" type="text" value={xMin} onChange={e => setXMin(e.target.value)} />
                     <Input id="function_xmax" label="X Max" type="text" value={xMax} onChange={e => setXMax(e.target.value)} />
                 </div>
+                 <div className="grid grid-cols-2 gap-2">
+                    <Input id="function_xlabel" label="X Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
+                    <Input id="function_ylabel" label="Y Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
+                </div>
+                 <div>
+                    <label htmlFor="line_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Line Color</label>
+                    <input id="line_color" type="color" value={lineColor} onChange={e => setLineColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+                </div>
             </div>
             <ErrorDisplay error={error} />
-            <div className="h-96 w-full mt-4">
+            <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
+            <div className="h-96 w-full mt-4" ref={chartRef}>
                 <ResponsiveContainer>
-                    <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                    <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                        <XAxis type="number" dataKey="x" domain={['dataMin', 'dataMax']} stroke="var(--color-text-secondary)" />
-                        <YAxis stroke="var(--color-text-secondary)" />
+                        <XAxis type="number" dataKey="x" domain={['dataMin', 'dataMax']} stroke="var(--color-text-secondary)" label={{ value: xLabel, position: 'insideBottom', offset: -15 }}/>
+                        <YAxis stroke="var(--color-text-secondary)" label={{ value: yLabel, angle: -90, position: 'insideLeft' }}/>
                         <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
                         <Legend />
-                        <Line type="monotone" dataKey="y" stroke="var(--color-primary)" strokeWidth={2} dot={false} name={`y = ${expression}`} />
+                        <Line type="monotone" dataKey="y" stroke={lineColor} strokeWidth={2} dot={false} name={`y = ${expression}`} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
+            <ExportButton onClick={handleExport} />
         </div>
     );
 };
 
 const ScatterPlotter: React.FC = () => {
-    const [dataStr, setDataStr] = useState('1, 5\n2, 8\n3, 6\n4, 9\n5, 7');
-    const [title, setTitle] = useState('Sample Scatter Plot');
-    const [xLabel, setXLabel] = useState('X-Axis');
-    const [yLabel, setYLabel] = useState('Y-Axis');
-    
+    const LOCAL_STORAGE_KEY = 'graphing_scatterPlotter_settings';
+
+    const initialState = useMemo(() => {
+        const defaultState = {
+            dataStr: '1, 5\n2, 8\n3, 6\n4, 9\n5, 7',
+            title: 'Sample Scatter Plot',
+            xLabel: 'X-Axis',
+            yLabel: 'Y-Axis',
+            pointColor: '#4299e1',
+        };
+        try {
+            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+            return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
+        } catch (e) {
+            console.error("Failed to load ScatterPlotter state:", e);
+            return defaultState;
+        }
+    }, []);
+
+    const [dataStr, setDataStr] = useState(initialState.dataStr);
+    const [title, setTitle] = useState(initialState.title);
+    const [xLabel, setXLabel] = useState(initialState.xLabel);
+    const [yLabel, setYLabel] = useState(initialState.yLabel);
+    const [pointColor, setPointColor] = useState(initialState.pointColor);
+    const chartRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        try {
+            const stateToSave = { dataStr, title, xLabel, yLabel, pointColor };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
+        } catch (e) {
+            console.error("Failed to save ScatterPlotter state:", e);
+        }
+    }, [dataStr, title, xLabel, yLabel, pointColor]);
+
+
     const { data, error } = useMemo(() => {
         if (!dataStr.trim()) return { data: [], error: "Please enter data." };
         const points = [];
@@ -127,6 +266,8 @@ const ScatterPlotter: React.FC = () => {
         return { data: points, error: null };
     }, [dataStr]);
 
+    const handleExport = () => exportToPng(chartRef, `${title.replace(/\s+/g, '_') || 'scatter-plot'}.png`);
+
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -134,29 +275,64 @@ const ScatterPlotter: React.FC = () => {
                 <TextArea id="scatter_data" label="Data (X,Y per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
                 <Input id="scatter_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
                 <Input id="scatter_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
+                 <div>
+                    <label htmlFor="scatter_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Point Color</label>
+                    <input id="scatter_color" type="color" value={pointColor} onChange={e => setPointColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+                </div>
             </div>
             <ErrorDisplay error={error} />
             <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
-            <div className="h-96 w-full mt-4">
+            <div className="h-96 w-full mt-4" ref={chartRef}>
                 <ResponsiveContainer>
                     <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                         <CartesianGrid stroke="var(--color-border)" />
                         <XAxis type="number" dataKey="x" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
                         <YAxis type="number" dataKey="y" name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
                         <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                        <Scatter name="Data Points" data={data} fill="var(--color-primary)" />
+                        <Scatter name="Data Points" data={data} fill={pointColor} />
                     </ScatterChart>
                 </ResponsiveContainer>
             </div>
+            <ExportButton onClick={handleExport} />
         </div>
     );
 };
 
 const BarChartCreator: React.FC = () => {
-    const [dataStr, setDataStr] = useState('Mice, 25\nZebra, 42\nLion, 12\nElephant, 8');
-    const [title, setTitle] = useState('Animal Population');
-    const [xLabel, setXLabel] = useState('Animal');
-    const [yLabel, setYLabel] = useState('Population');
+    const LOCAL_STORAGE_KEY = 'graphing_barChart_settings';
+
+    const initialState = useMemo(() => {
+        const defaultState = {
+            dataStr: 'Mice, 25\nZebra, 42\nLion, 12\nElephant, 8',
+            title: 'Animal Population',
+            xLabel: 'Animal',
+            yLabel: 'Population',
+            barColor: '#48bb78',
+        };
+        try {
+            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+            return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
+        } catch (e) {
+            console.error("Failed to load BarChartCreator state:", e);
+            return defaultState;
+        }
+    }, []);
+    
+    const [dataStr, setDataStr] = useState(initialState.dataStr);
+    const [title, setTitle] = useState(initialState.title);
+    const [xLabel, setXLabel] = useState(initialState.xLabel);
+    const [yLabel, setYLabel] = useState(initialState.yLabel);
+    const [barColor, setBarColor] = useState(initialState.barColor);
+    const chartRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        try {
+            const stateToSave = { dataStr, title, xLabel, yLabel, barColor };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
+        } catch (e) {
+            console.error("Failed to save BarChartCreator state:", e);
+        }
+    }, [dataStr, title, xLabel, yLabel, barColor]);
     
     const { data, error } = useMemo(() => {
         if (!dataStr.trim()) return { data: [], error: "Please enter data." };
@@ -174,6 +350,8 @@ const BarChartCreator: React.FC = () => {
         return { data: points, error: null };
     }, [dataStr]);
 
+    const handleExport = () => exportToPng(chartRef, `${title.replace(/\s+/g, '_') || 'bar-chart'}.png`);
+
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -181,29 +359,60 @@ const BarChartCreator: React.FC = () => {
                 <TextArea id="bar_data" label="Data (Label,Value per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
                 <Input id="bar_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
                 <Input id="bar_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
+                 <div>
+                    <label htmlFor="bar_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Bar Color</label>
+                    <input id="bar_color" type="color" value={barColor} onChange={e => setBarColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+                </div>
             </div>
             <ErrorDisplay error={error} />
             <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
-            <div className="h-96 w-full mt-4">
+            <div className="h-96 w-full mt-4" ref={chartRef}>
                 <ResponsiveContainer>
-                    <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                    <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                         <CartesianGrid stroke="var(--color-border)" />
                         <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
                         <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
                         <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
                         <Legend />
-                        <Bar dataKey="value" fill="var(--color-accent)" name={yLabel} />
+                        <Bar dataKey="value" fill={barColor} name={yLabel} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
+            <ExportButton onClick={handleExport} />
         </div>
     );
 };
 
 const PieChartCreator: React.FC = () => {
-    const [dataStr, setDataStr] = useState('Marketing, 50\nSales, 120\nDevelopment, 90\nSupport, 75');
-    const [title, setTitle] = useState('Department Budget Allocation');
+    const LOCAL_STORAGE_KEY = 'graphing_pieChart_settings';
     
+    const initialState = useMemo(() => {
+        const defaultState = {
+            dataStr: 'Marketing, 50\nSales, 120\nDevelopment, 90\nSupport, 75',
+            title: 'Department Budget Allocation',
+        };
+        try {
+            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+            return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
+        } catch (e) {
+            console.error("Failed to load PieChartCreator state:", e);
+            return defaultState;
+        }
+    }, []);
+
+    const [dataStr, setDataStr] = useState(initialState.dataStr);
+    const [title, setTitle] = useState(initialState.title);
+    const chartRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        try {
+            const stateToSave = { dataStr, title };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
+        } catch (e) {
+            console.error("Failed to save PieChartCreator state:", e);
+        }
+    }, [dataStr, title]);
+
     const { data, error } = useMemo(() => {
         if (!dataStr.trim()) return { data: [], error: "Please enter data." };
         const parsedData = dataStr.split('\n').map((line, index) => {
@@ -223,6 +432,7 @@ const PieChartCreator: React.FC = () => {
     }, [dataStr]);
     
     const COLORS = ['#4299e1', '#ed8936', '#48bb78', '#9f7aea', '#f56565', '#4fd1c5'];
+    const handleExport = () => exportToPng(chartRef, `${title.replace(/\s+/g, '_') || 'pie-chart'}.png`);
 
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
@@ -232,7 +442,7 @@ const PieChartCreator: React.FC = () => {
             </div>
             <ErrorDisplay error={error} />
             <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
-            <div className="h-96 w-full">
+            <div className="h-96 w-full" ref={chartRef}>
                  <ResponsiveContainer>
                     <PieChart>
                         <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
@@ -245,6 +455,7 @@ const PieChartCreator: React.FC = () => {
                     </PieChart>
                  </ResponsiveContainer>
              </div>
+             <ExportButton onClick={handleExport} />
         </div>
     );
 };
@@ -252,7 +463,23 @@ const PieChartCreator: React.FC = () => {
 // --- Main Graphing Component ---
 const Graph: React.FC = () => {
     type ChartType = 'function' | 'scatter' | 'bar' | 'pie';
-    const [chartType, setChartType] = useState<ChartType>('function');
+    const [chartType, setChartType] = useState<ChartType>(() => {
+        try {
+            const saved = localStorage.getItem('graphing_activeChartType');
+            return (saved as ChartType) || 'function';
+        } catch (e) {
+            console.error("Failed to load chart type from localStorage", e);
+            return 'function';
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('graphing_activeChartType', chartType);
+        } catch (e) {
+            console.error("Failed to save chart type to localStorage", e);
+        }
+    }, [chartType]);
     
     const renderChart = () => {
         switch(chartType) {

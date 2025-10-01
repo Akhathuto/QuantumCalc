@@ -65,12 +65,17 @@ const Settings: React.FC = () => {
         const root = window.document.documentElement;
         const newIsDarkMode = !isDarkMode;
         setIsDarkMode(newIsDarkMode);
-        if (newIsDarkMode) {
-            root.classList.remove('light');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            root.classList.add('light');
-            localStorage.setItem('theme', 'light');
+        try {
+            if (newIsDarkMode) {
+                root.classList.remove('light');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                root.classList.add('light');
+                localStorage.setItem('theme', 'light');
+            }
+        } catch (error) {
+            console.error("Failed to save theme to localStorage:", error);
+            showToast("Could not save theme preference.");
         }
     };
 
@@ -125,18 +130,20 @@ const Settings: React.FC = () => {
                     </p>
                     <button
                         onClick={handleThemeToggle}
+                        role="switch"
+                        aria-checked={isDarkMode}
+                        aria-label="Theme toggle"
                         className={`relative inline-flex items-center h-7 w-12 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-surface focus:ring-brand-primary ${
                             isDarkMode ? 'bg-brand-primary' : 'bg-gray-400'
                         }`}
-                        aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
                     >
-                        <span className="sr-only">Theme toggle</span>
+                        <span className="sr-only">Switch to {isDarkMode ? 'light' : 'dark'} mode</span>
                         <span
                             className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ease-in-out ${
                                 isDarkMode ? 'translate-x-6' : 'translate-x-1'
                             }`}
                         />
-                        <Sun className={`absolute left-1.5 h-4 w-4 text-yellow-300 transition-opacity ${isDarkMode ? 'opacity-0' : 'opacity-100'}`} />
+                        <Sun className={`absolute left-1.5 h-4 w-4 text-yellow-300 transition-opacity ${!isDarkMode ? 'opacity-100' : 'opacity-0'}`} />
                         <Moon className={`absolute right-1.5 h-4 w-4 text-white transition-opacity ${isDarkMode ? 'opacity-100' : 'opacity-0'}`} />
                     </button>
                 </div>
