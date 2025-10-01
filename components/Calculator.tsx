@@ -208,7 +208,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
         .replace(/−/g, '-');
 
       const evalResult = parser.evaluate(sanitizedExpression);
-      const resultStr = String(parseFloat(evalResult.toFixed(10)));
+      const resultStr = math.format(evalResult, { precision: 10 });
       
       const newHistoryEntry = { expression: fullExpression, result: resultStr, timestamp: new Date().toISOString() };
       addToHistory(newHistoryEntry);
