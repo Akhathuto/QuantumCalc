@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { HistoryEntry } from '../types';
-import { Star } from 'lucide-react';
+import { Star, Search } from 'lucide-react';
 
 interface HistoryProps {
   history: HistoryEntry[];
@@ -11,14 +11,22 @@ interface HistoryProps {
 }
 
 const History: React.FC<HistoryProps> = ({ history, loadFromHistory, clearHistory, toggleFavorite }) => {
-  
-  const sortedHistory = [...history].sort((a, b) => {
-    // Pinned items first
-    if (a.isFavorite && !b.isFavorite) return -1;
-    if (!a.isFavorite && b.isFavorite) return 1;
-    // Then sort by date
-    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-  });
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredAndSortedHistory = useMemo(() => {
+    const filtered = history.filter(item =>
+      item.expression.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.result.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return [...filtered].sort((a, b) => {
+      // Pinned items first
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+      // Then sort by date
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+  }, [history, searchTerm]);
 
   const handleFavoriteClick = (e: React.MouseEvent, timestamp: string) => {
     e.stopPropagation(); // Prevent loading the history item when clicking the star
@@ -38,12 +46,28 @@ const History: React.FC<HistoryProps> = ({ history, loadFromHistory, clearHistor
           </button>
         )}
       </div>
+      
+      {history.length > 0 && (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-secondary" size={20} />
+          <input
+            type="text"
+            placeholder="Search by expression or result..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-brand-surface border border-brand-border rounded-md p-2 pl-10 focus:ring-brand-primary focus:border-brand-primary"
+            aria-label="Search calculation history"
+          />
+        </div>
+      )}
 
       {history.length === 0 ? (
         <p className="text-center text-brand-text-secondary py-16">No calculations yet. Go make some history!</p>
+      ) : filteredAndSortedHistory.length === 0 ? (
+        <p className="text-center text-brand-text-secondary py-16">No matching calculations found for "{searchTerm}".</p>
       ) : (
         <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-          {sortedHistory.map((item, index) => (
+          {filteredAndSortedHistory.map((item, index) => (
             <div
               key={index}
               className={`bg-brand-surface/50 p-4 rounded-lg cursor-pointer hover:bg-brand-surface transition-colors relative ${item.isFavorite ? 'border-l-4 border-yellow-500' : ''}`}

@@ -63,7 +63,7 @@ const BaseConverter: React.FC = () => {
                     id={base}
                     value={values[base]}
                     onChange={(e) => handleInputChange(base, e.target.value)}
-                    className="text-lg"
+                    className="w-full bg-gray-900/70 border-gray-600 rounded-md p-3 font-mono text-lg focus:ring-brand-primary focus:border-brand-primary"
                 />
             </div>
         );

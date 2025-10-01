@@ -1,57 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import { KeyRound, Sun, Moon } from 'lucide-react';
+import { KeyRound, Save, Trash2, CheckCircle } from 'lucide-react';
 
 const Settings: React.FC = () => {
-    const [theme, setTheme] = useState(() => {
-        if (typeof window !== 'undefined') {
-            if (localStorage.theme === 'light') return 'light';
-            if (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
-        }
-        return 'dark';
-    });
-    
-    useEffect(() => {
-        if (theme === 'light') {
-            document.documentElement.classList.add('light');
-            localStorage.setItem('theme', 'light');
-        } else {
-            document.documentElement.classList.remove('light');
-            localStorage.setItem('theme', 'dark');
-        }
-    }, [theme]);
+    const [apiKey, setApiKey] = useState('');
+    const [isKeySet, setIsKeySet] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
 
-    const toggleTheme = () => {
-        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    useEffect(() => {
+        const storedKey = localStorage.getItem('geminiApiKey');
+        if (storedKey) {
+            setApiKey(storedKey);
+            setIsKeySet(true);
+        }
+    }, []);
+
+    const showToast = (message: string) => {
+        setToastMessage(message);
+        setTimeout(() => setToastMessage(''), 3000);
+    };
+
+    const handleSave = () => {
+        if (apiKey.trim()) {
+            localStorage.setItem('geminiApiKey', apiKey.trim());
+            setIsKeySet(true);
+            showToast('API Key saved successfully!');
+        } else {
+            handleClear();
+        }
+    };
+
+    const handleClear = () => {
+        localStorage.removeItem('geminiApiKey');
+        setApiKey('');
+        setIsKeySet(false);
+        showToast('API Key cleared.');
     };
 
     return (
         <div>
             <h2 className="text-3xl font-bold mb-6 text-brand-primary">Settings</h2>
-            <div className="bg-brand-surface/50 p-6 rounded-lg max-w-2xl mx-auto space-y-8">
-                <div>
-                    <h3 className="text-xl font-bold mb-4 text-brand-accent flex items-center gap-2">
-                        Appearance
-                    </h3>
-                    <div className="flex items-center justify-between">
-                        <p className="text-brand-text-secondary">Toggle between light and dark mode.</p>
-                        <button onClick={toggleTheme} className="p-2 rounded-full bg-brand-bg hover:bg-brand-border transition-colors">
-                            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            <div className="bg-brand-surface/50 p-6 rounded-lg max-w-2xl mx-auto">
+                <h3 className="text-xl font-bold mb-4 text-brand-accent flex items-center gap-2">
+                    <KeyRound /> Google Gemini API Key
+                </h3>
+                <p className="text-brand-text-secondary mb-4 text-sm">
+                    To use AI-powered features like the Formula Explorer and Currency Analysis, you need a Google Gemini API key. You can get a free key from{' '}
+                    <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline">
+                        Google AI Studio
+                    </a>.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-2 items-center">
+                    <div className="relative flex-grow w-full">
+                         <input
+                            type="password"
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                            placeholder="Enter your API key here"
+                            className="w-full bg-brand-bg border border-brand-border rounded-md p-3 pr-10 font-mono focus:ring-brand-primary focus:border-brand-primary"
+                         />
+                         {isKeySet && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" size={20} />}
+                    </div>
+                   
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <button onClick={handleSave} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary hover:bg-blue-500 text-white rounded-md font-semibold transition-colors">
+                            <Save size={18} /> Save
+                        </button>
+                        <button onClick={handleClear} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-500/80 hover:bg-red-500 text-white rounded-md font-semibold transition-colors">
+                            <Trash2 size={18} /> Clear
                         </button>
                     </div>
                 </div>
 
-                <div className="border-t border-brand-border pt-8">
-                    <h3 className="text-xl font-bold mb-4 text-brand-accent flex items-center gap-2">
-                        <KeyRound /> Google Gemini API Key
-                    </h3>
-                    <p className="text-brand-text-secondary text-sm">
-                        The Gemini API key for AI-powered features like the Formula Explorer is configured by the application administrator.
-                    </p>
-                    <p className="text-xs text-brand-text-secondary mt-3">
-                        This is managed via an environment variable to ensure security and proper functionality.
-                    </p>
-                </div>
+                 <p className="text-xs text-brand-text-secondary mt-3">
+                    Your API key is stored locally in your browser and is never sent to our servers.
+                </p>
             </div>
+            {toastMessage && <div className="fixed bottom-6 right-6 bg-brand-accent text-white px-5 py-3 rounded-lg shadow-2xl z-50 animate-fade-in-down">{toastMessage}</div>}
         </div>
     );
 };

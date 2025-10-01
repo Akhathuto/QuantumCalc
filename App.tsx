@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from './components/common/Header';
 import Calculator from './components/Calculator';
@@ -24,6 +25,7 @@ const App: React.FC = () => {
     try {
       const savedHistory = localStorage.getItem('calcHistory');
       return savedHistory ? JSON.parse(savedHistory) : [];
+    // Fix: Added curly braces to the catch block to fix syntax error. This resolves all subsequent scope-related errors.
     } catch (error) {
       console.error("Could not parse history from localStorage", error);
       return [];
@@ -103,9 +105,9 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen font-sans">
+    <div className="bg-brand-bg text-brand-text min-h-screen font-sans">
       <Header activeTab={activeTab} onTabClick={setActiveTab} />
-      <main className="container mx-auto px-4 pb-8 pt-8">
+      <main className="container mx-auto px-4 pb-8">
         {renderActiveTab()}
       </main>
     </div>

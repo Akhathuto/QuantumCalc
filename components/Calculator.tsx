@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { HistoryEntry, Explanation } from '../types';
 import { getFormulaExplanation } from '../services/geminiService';
@@ -207,7 +208,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
         .replace(/−/g, '-');
 
       const evalResult = parser.evaluate(sanitizedExpression);
-      const resultStr = math.format(evalResult, { precision: 14 });
+      const resultStr = String(parseFloat(evalResult.toFixed(10)));
       
       const newHistoryEntry = { expression: fullExpression, result: resultStr, timestamp: new Date().toISOString() };
       addToHistory(newHistoryEntry);
@@ -222,7 +223,25 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
       const expl = await getFormulaExplanation(sanitizedExpression);
       setExplanation(expl);
     } catch (e: any) {
-      setError(e.message || 'Invalid Expression');
+      let errorMessage = 'Invalid Expression'; // Default message
+      if (e instanceof Error) {
+        if (e.message.includes('Undefined symbol')) {
+          const match = e.message.match(/Undefined symbol (.+)/);
+          errorMessage = match ? `Unknown function: ${match[1]}` : 'Unknown function or variable';
+        } else if (e.message.toLowerCase().includes('parenthesis')) {
+          errorMessage = 'Mismatched parentheses';
+        } else if (e.message.includes('Invalid pmt() args')) {
+          errorMessage = 'Invalid arguments for pmt()';
+        } else if (e.message.toLowerCase().includes('divide by zero')) {
+          errorMessage = 'Error: Cannot divide by zero';
+        } else if (e.message.includes('Value expected')) {
+          errorMessage = 'Syntax Error: Check operators';
+        } else {
+          // Use a cleaner version of other specific mathjs errors
+          errorMessage = e.message.split('(')[0].trim();
+        }
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
       setIsSecond(false);
@@ -271,12 +290,12 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
   };
 
   const styles = {
-    op: 'bg-brand-secondary/90 hover:bg-brand-secondary text-white',
-    mem: 'bg-brand-accent/80 hover:bg-brand-accent text-white',
-    clear: 'bg-brand-danger/80 hover:bg-brand-danger text-white',
-    num: 'bg-brand-surface hover:bg-brand-border text-brand-text',
+    op: 'bg-brand-secondary hover:bg-orange-500 text-white',
+    mem: 'bg-teal-600 hover:bg-teal-500 text-white',
+    clear: 'bg-red-500/80 hover:bg-red-500 text-white',
+    num: 'bg-brand-surface hover:bg-gray-600 text-brand-text',
     func: 'bg-brand-primary/80 hover:bg-brand-primary text-white',
-    active: 'bg-brand-primary text-white ring-2 ring-white',
+    active: 'bg-brand-primary text-white',
   };
 
   const buttonGrid: { label: string, secondLabel?: string, action: any, secondAction?: any, className: string, colSpan?: number, active?: boolean, title?: string, secondTitle?: string }[][] = [
@@ -348,9 +367,9 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     <>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
-            <div className="bg-brand-surface/50 rounded-lg p-4 text-right min-h-[160px] flex flex-col justify-between relative border border-brand-border shadow-inner">
+            <div className="bg-gray-900/50 rounded-lg p-4 text-right min-h-[160px] flex flex-col justify-between relative border border-brand-border">
                 {/* Ticker Tape */}
-                <div className="h-20 overflow-y-auto text-right text-sm text-brand-text-secondary pr-1">
+                <div className="h-20 overflow-y-auto text-right text-sm text-brand-text-secondary pr-1 scrollbar-thin scrollbar-thumb-brand-surface">
                     {tickerHistory.map((item, index) => (
                         <div key={item.timestamp + index} className="opacity-70 animate-fade-in-down">
                             <span className="truncate">{item.expression} = </span>
@@ -364,7 +383,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
                     <div className="absolute top-2 left-3 flex items-center gap-4 text-xs font-bold z-10">
                         {isSecond && <span className="bg-yellow-500 text-black px-1.5 py-0.5 rounded animate-fade-in-down">2nd</span>}
                         <span className="text-brand-primary">{angleMode.toUpperCase()}</span>
-                        {memory !== null && <span className="text-brand-accent animate-fade-in-down">M</span>}
+                        {memory !== null && <span className="text-teal-400 animate-fade-in-down">M</span>}
                     </div>
                     {/* Expression Line */}
                     <div className="text-brand-text-secondary text-xl break-words h-7 overflow-x-auto text-right font-mono transition-opacity duration-300" style={{ scrollbarWidth: 'none' }}>{expression || ' '}</div>
@@ -373,13 +392,13 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
                         {currentInput}
                     </div>
                      {/* Error Line */}
-                    <div className="text-brand-danger text-sm font-semibold h-5 text-right transition-opacity duration-300">
+                    <div className="text-red-400 text-sm font-semibold h-5 text-right transition-opacity duration-300">
                       {error && <span className="animate-fade-in-down">{error}</span>}
                     </div>
                 </div>
             </div>
             
-             <div className="grid grid-cols-5 gap-2 mt-4">
+             <div className="grid grid-cols-5 gap-2">
               {buttonGrid.map((row, rowIndex) =>
                 row.map((b, colIndex) => (
                   <div key={`${rowIndex}-${colIndex}`} className={`col-span-${b.colSpan || 1}`}>
@@ -397,7 +416,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
             
            <div className="flex justify-center gap-2 mt-4">
               {angleModes.map(mode => (
-                  <button key={mode.id} onClick={() => setAngleMode(mode.id)} className={`px-4 py-1 rounded-full text-sm font-semibold transition-colors ${angleMode === mode.id ? 'bg-brand-primary text-white' : 'bg-brand-surface hover:bg-brand-border'}`}>
+                  <button key={mode.id} onClick={() => setAngleMode(mode.id)} className={`px-4 py-1 rounded-full text-sm font-semibold transition-colors ${angleMode === mode.id ? 'bg-brand-primary text-white' : 'bg-brand-surface hover:bg-gray-600'}`}>
                       {mode.label}
                   </button>
               ))}

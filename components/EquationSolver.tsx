@@ -193,7 +193,7 @@ const EquationSolver: React.FC = () => {
                         value={equation}
                         onChange={e => setEquation(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSolve()}
-                        className="flex-grow w-full text-lg"
+                        className="flex-grow w-full bg-gray-900/70 border-gray-600 rounded-md p-3 font-mono text-lg focus:ring-brand-primary focus:border-brand-primary"
                         placeholder="e.g., 2x + 5 = 10"
                     />
                     <Button onClick={handleSolve} className="bg-brand-primary hover:bg-blue-500 h-auto px-6 py-3 text-lg">
@@ -209,7 +209,7 @@ const EquationSolver: React.FC = () => {
                         <button 
                             key={ex}
                             onClick={() => setEquation(ex)}
-                            className="px-3 py-1 bg-brand-surface hover:bg-brand-border rounded-full text-xs font-mono"
+                            className="px-3 py-1 bg-brand-surface hover:bg-gray-600 rounded-full text-xs font-mono"
                         >
                             {ex}
                         </button>

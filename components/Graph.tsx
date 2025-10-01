@@ -18,6 +18,20 @@ const SubNavButton: React.FC<{ label: string; isActive: boolean; onClick: () => 
     </button>
 );
 
+const Input = ({ label, id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string, id: string }) => (
+    <div>
+        <label htmlFor={id} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
+        <input id={id} {...props} className="w-full bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary" />
+    </div>
+);
+
+const TextArea = ({ label, id, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string, id: string }) => (
+    <div>
+        <label htmlFor={id} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
+        <textarea id={id} {...props} rows={5} className="w-full bg-gray-900/70 border-gray-600 rounded-md p-2 font-mono focus:ring-brand-primary focus:border-brand-primary" />
+    </div>
+);
+
 const ErrorDisplay: React.FC<{ error: string | null }> = ({ error }) => {
     if (!error) return null;
     return (
@@ -68,18 +82,11 @@ const FunctionPlotter: React.FC = () => {
         <div className="bg-brand-surface/50 p-6 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-end">
                 <div className="md:col-span-2">
-                    <label htmlFor="function_expr" className="block text-sm font-medium text-brand-text-secondary mb-1">Function y = f(x)</label>
-                    <input id="function_expr" type="text" value={expression} onChange={e => setExpression(e.target.value)} placeholder="e.g., sin(x)" />
+                    <Input id="function_expr" label="Function y = f(x)" type="text" value={expression} onChange={e => setExpression(e.target.value)} placeholder="e.g., sin(x)" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                    <div>
-                        <label htmlFor="function_xmin" className="block text-sm font-medium text-brand-text-secondary mb-1">X Min</label>
-                        <input id="function_xmin" type="text" value={xMin} onChange={e => setXMin(e.target.value)} />
-                    </div>
-                    <div>
-                        <label htmlFor="function_xmax" className="block text-sm font-medium text-brand-text-secondary mb-1">X Max</label>
-                        <input id="function_xmax" type="text" value={xMax} onChange={e => setXMax(e.target.value)} />
-                    </div>
+                    <Input id="function_xmin" label="X Min" type="text" value={xMin} onChange={e => setXMin(e.target.value)} />
+                    <Input id="function_xmax" label="X Max" type="text" value={xMax} onChange={e => setXMax(e.target.value)} />
                 </div>
             </div>
             <ErrorDisplay error={error} />
@@ -123,22 +130,10 @@ const ScatterPlotter: React.FC = () => {
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label htmlFor="scatter_title" className="block text-sm font-medium text-brand-text-secondary mb-1">Chart Title</label>
-                    <input id="scatter_title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
-                </div>
-                <div>
-                    <label htmlFor="scatter_data" className="block text-sm font-medium text-brand-text-secondary mb-1">Data (X,Y per line)</label>
-                    <textarea id="scatter_data" value={dataStr} onChange={e => setDataStr(e.target.value)} rows={5} className="font-mono" />
-                </div>
-                <div>
-                    <label htmlFor="scatter_xlabel" className="block text-sm font-medium text-brand-text-secondary mb-1">X-Axis Label</label>
-                    <input id="scatter_xlabel" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
-                </div>
-                <div>
-                    <label htmlFor="scatter_ylabel" className="block text-sm font-medium text-brand-text-secondary mb-1">Y-Axis Label</label>
-                    <input id="scatter_ylabel" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
-                </div>
+                <Input id="scatter_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
+                <TextArea id="scatter_data" label="Data (X,Y per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
+                <Input id="scatter_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
+                <Input id="scatter_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
             </div>
             <ErrorDisplay error={error} />
             <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
@@ -182,22 +177,10 @@ const BarChartCreator: React.FC = () => {
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                 <div>
-                    <label htmlFor="bar_title" className="block text-sm font-medium text-brand-text-secondary mb-1">Chart Title</label>
-                    <input id="bar_title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
-                </div>
-                <div>
-                    <label htmlFor="bar_data" className="block text-sm font-medium text-brand-text-secondary mb-1">Data (Label,Value per line)</label>
-                    <textarea id="bar_data" value={dataStr} onChange={e => setDataStr(e.target.value)} rows={5} className="font-mono"/>
-                </div>
-                <div>
-                    <label htmlFor="bar_xlabel" className="block text-sm font-medium text-brand-text-secondary mb-1">X-Axis Label</label>
-                    <input id="bar_xlabel" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
-                </div>
-                <div>
-                    <label htmlFor="bar_ylabel" className="block text-sm font-medium text-brand-text-secondary mb-1">Y-Axis Label</label>
-                    <input id="bar_ylabel" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
-                </div>
+                <Input id="bar_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
+                <TextArea id="bar_data" label="Data (Label,Value per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
+                <Input id="bar_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
+                <Input id="bar_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
             </div>
             <ErrorDisplay error={error} />
             <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
@@ -244,14 +227,8 @@ const PieChartCreator: React.FC = () => {
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label htmlFor="pie_title" className="block text-sm font-medium text-brand-text-secondary mb-1">Chart Title</label>
-                    <input id="pie_title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
-                </div>
-                <div>
-                    <label htmlFor="pie_data" className="block text-sm font-medium text-brand-text-secondary mb-1">Data (Label,Value per line)</label>
-                    <textarea id="pie_data" value={dataStr} onChange={e => setDataStr(e.target.value)} rows={5} className="font-mono" />
-                </div>
+                <Input id="pie_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
+                <TextArea id="pie_data" label="Data (Label,Value per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
             </div>
             <ErrorDisplay error={error} />
             <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
