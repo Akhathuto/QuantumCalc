@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { KeyRound, Save, Trash2, CheckCircle } from 'lucide-react';
 
@@ -7,10 +8,14 @@ const Settings: React.FC = () => {
     const [toastMessage, setToastMessage] = useState('');
 
     useEffect(() => {
-        const storedKey = localStorage.getItem('geminiApiKey');
-        if (storedKey) {
-            setApiKey(storedKey);
-            setIsKeySet(true);
+        try {
+            const storedKey = localStorage.getItem('geminiApiKey');
+            if (storedKey) {
+                setApiKey(storedKey);
+                setIsKeySet(true);
+            }
+        } catch (error) {
+            console.error("Failed to read API key from localStorage:", error);
         }
     }, []);
 
@@ -20,20 +25,30 @@ const Settings: React.FC = () => {
     };
 
     const handleSave = () => {
-        if (apiKey.trim()) {
-            localStorage.setItem('geminiApiKey', apiKey.trim());
-            setIsKeySet(true);
-            showToast('API Key saved successfully!');
-        } else {
-            handleClear();
+        try {
+            if (apiKey.trim()) {
+                localStorage.setItem('geminiApiKey', apiKey.trim());
+                setIsKeySet(true);
+                showToast('API Key saved successfully!');
+            } else {
+                handleClear();
+            }
+        } catch (error) {
+            console.error("Failed to save API key to localStorage:", error);
+            showToast('Error: Could not save API key.');
         }
     };
 
     const handleClear = () => {
-        localStorage.removeItem('geminiApiKey');
-        setApiKey('');
-        setIsKeySet(false);
-        showToast('API Key cleared.');
+        try {
+            localStorage.removeItem('geminiApiKey');
+            setApiKey('');
+            setIsKeySet(false);
+            showToast('API Key cleared.');
+        } catch (error) {
+            console.error("Failed to remove API key from localStorage:", error);
+            showToast('Error: Could not clear API key.');
+        }
     };
 
     return (

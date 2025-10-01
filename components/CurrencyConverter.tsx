@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { ArrowRightLeft, Loader, AlertTriangle, TrendingUp } from 'lucide-react';
 import { getCurrencyForecast } from '../services/geminiService';
@@ -13,9 +14,21 @@ const CurrencyConverter: React.FC = () => {
   const [amountFrom, setAmountFrom] = useState('100');
   const [amountTo, setAmountTo] = useState('');
   
-  // Initialize from localStorage or default
-  const [fromCurrency, setFromCurrency] = useState(() => localStorage.getItem('fromCurrency') || 'USD');
-  const [toCurrency, setToCurrency] = useState(() => localStorage.getItem('toCurrency') || 'EUR');
+  // Initialize from localStorage or default, with error handling
+  const [fromCurrency, setFromCurrency] = useState(() => {
+    try {
+      return localStorage.getItem('fromCurrency') || 'USD';
+    } catch {
+      return 'USD';
+    }
+  });
+  const [toCurrency, setToCurrency] = useState(() => {
+    try {
+      return localStorage.getItem('toCurrency') || 'EUR';
+    } catch {
+      return 'EUR';
+    }
+  });
   
   const [ratesData, setRatesData] = useState<RatesData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,8 +60,12 @@ const CurrencyConverter: React.FC = () => {
 
   // Save currency choices to localStorage
   useEffect(() => {
-    localStorage.setItem('fromCurrency', fromCurrency);
-    localStorage.setItem('toCurrency', toCurrency);
+    try {
+      localStorage.setItem('fromCurrency', fromCurrency);
+      localStorage.setItem('toCurrency', toCurrency);
+    } catch (error) {
+      console.error("Failed to save currency preferences to localStorage:", error);
+    }
   }, [fromCurrency, toCurrency]);
 
   const currencyOptions = useMemo(() => {

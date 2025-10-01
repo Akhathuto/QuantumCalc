@@ -25,7 +25,6 @@ const App: React.FC = () => {
     try {
       const savedHistory = localStorage.getItem('calcHistory');
       return savedHistory ? JSON.parse(savedHistory) : [];
-    // Fix: Added curly braces to the catch block to fix syntax error. This resolves all subsequent scope-related errors.
     } catch (error) {
       console.error("Could not parse history from localStorage", error);
       return [];
@@ -35,7 +34,11 @@ const App: React.FC = () => {
   const [expressionToLoad, setExpressionToLoad] = useState<HistoryEntry | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('calcHistory', JSON.stringify(history));
+    try {
+      localStorage.setItem('calcHistory', JSON.stringify(history));
+    } catch (error) {
+      console.error("Failed to save history to localStorage:", error);
+    }
   }, [history]);
 
   const addToHistory = (entry: HistoryEntry) => {

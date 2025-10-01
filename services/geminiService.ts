@@ -3,8 +3,14 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Explanation } from '../types';
 
 const getAiClient = (): GoogleGenAI | null => {
-  // Prioritize user-provided key from localStorage
-  const userApiKey = localStorage.getItem('geminiApiKey');
+  let userApiKey: string | null = null;
+  try {
+    // Prioritize user-provided key from localStorage
+    userApiKey = localStorage.getItem('geminiApiKey');
+  } catch (error) {
+    console.error("Could not access localStorage to get API key:", error);
+  }
+  
   const apiKey = userApiKey || process.env.API_KEY;
 
   if (!apiKey) {
