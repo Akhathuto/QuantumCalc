@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 
 type HealthCalcType = 'bmi' | 'bmr' | 'calorie';
@@ -64,22 +63,22 @@ const BMICalculator: React.FC<{ unitSystem: UnitSystem }> = ({ unitSystem }) => 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium mb-1">Weight ({unitSystem === 'metric' ? 'kg' : 'lbs'})</label>
-                    <input type="number" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-gray-900/70 p-2 rounded-md" />
+                    <input type="number" value={weight} onChange={e => setWeight(e.target.value)} />
                 </div>
                 {unitSystem === 'metric' ? (
                      <div>
                         <label className="block text-sm font-medium mb-1">Height (cm)</label>
-                        <input type="number" value={heightCm} onChange={e => setHeightCm(e.target.value)} className="w-full bg-gray-900/70 p-2 rounded-md" />
+                        <input type="number" value={heightCm} onChange={e => setHeightCm(e.target.value)} />
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-2">
                         <div>
                             <label className="block text-sm font-medium mb-1">Height (ft)</label>
-                            <input type="number" value={heightFt} onChange={e => setHeightFt(e.target.value)} className="w-full bg-gray-900/70 p-2 rounded-md" />
+                            <input type="number" value={heightFt} onChange={e => setHeightFt(e.target.value)} />
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-1">(in)</label>
-                            <input type="number" value={heightIn} onChange={e => setHeightIn(e.target.value)} className="w-full bg-gray-900/70 p-2 rounded-md" />
+                            <input type="number" value={heightIn} onChange={e => setHeightIn(e.target.value)} />
                         </div>
                     </div>
                 )}
@@ -136,33 +135,33 @@ const BMRCalculator: React.FC<{ unitSystem: UnitSystem, onBmrResult: (bmr: numbe
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium mb-1">Age</label>
-                    <input type="number" value={age} onChange={e => setAge(e.target.value)} className="w-full bg-gray-900/70 p-2 rounded-md" />
+                    <input type="number" value={age} onChange={e => setAge(e.target.value)} />
                 </div>
                  <div>
                     <label className="block text-sm font-medium mb-1">Gender</label>
-                    <select value={gender} onChange={e => setGender(e.target.value as any)} className="w-full bg-gray-900/70 p-2 rounded-md">
+                    <select value={gender} onChange={e => setGender(e.target.value as any)}>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
                     </select>
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-1">Weight ({unitSystem === 'metric' ? 'kg' : 'lbs'})</label>
-                    <input type="number" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-gray-900/70 p-2 rounded-md" />
+                    <input type="number" value={weight} onChange={e => setWeight(e.target.value)} />
                 </div>
                 {unitSystem === 'metric' ? (
                      <div>
                         <label className="block text-sm font-medium mb-1">Height (cm)</label>
-                        <input type="number" value={heightCm} onChange={e => setHeightCm(e.target.value)} className="w-full bg-gray-900/70 p-2 rounded-md" />
+                        <input type="number" value={heightCm} onChange={e => setHeightCm(e.target.value)} />
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-2">
                         <div>
                             <label className="block text-sm font-medium mb-1">Height (ft)</label>
-                            <input type="number" value={heightFt} onChange={e => setHeightFt(e.target.value)} className="w-full bg-gray-900/70 p-2 rounded-md" />
+                            <input type="number" value={heightFt} onChange={e => setHeightFt(e.target.value)} />
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-1">(in)</label>
-                            <input type="number" value={heightIn} onChange={e => setHeightIn(e.target.value)} className="w-full bg-gray-900/70 p-2 rounded-md" />
+                            <input type="number" value={heightIn} onChange={e => setHeightIn(e.target.value)} />
                         </div>
                     </div>
                 )}
@@ -208,7 +207,7 @@ const CalorieCalculator: React.FC<{ bmr: number | null }> = ({ bmr }) => {
     return (
         <div>
             <label className="block text-sm font-medium mb-1">Activity Level</label>
-            <select value={activity} onChange={e => setActivity(parseFloat(e.target.value))} className="w-full bg-gray-900/70 p-2 rounded-md mb-6">
+            <select value={activity} onChange={e => setActivity(parseFloat(e.target.value))} className="mb-6">
                 {activityLevels.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
             </select>
             {result && (

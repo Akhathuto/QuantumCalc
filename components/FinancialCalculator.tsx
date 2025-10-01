@@ -8,7 +8,7 @@ const InputField: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label
         <label htmlFor={id} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
         <div className="relative">
              {currencySymbol && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-secondary">{currencySymbol}</span>}
-            <input id={id} {...props} className={`w-full bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary font-mono ${currencySymbol ? 'pl-7' : ''}`} />
+            <input id={id} {...props} className={`${currencySymbol ? 'pl-7' : ''}`} />
         </div>
     </div>
 );
@@ -136,7 +136,7 @@ const CompoundInterestCalculator: React.FC<CalculatorProps> = ({ currency }) => 
                 <InputField label="Investment Term (Years)" id="ci-term" type="number" value={term} onChange={e => setTerm(e.target.value)} />
                 <div>
                   <label htmlFor="ci-frequency" className="block text-sm font-medium text-brand-text-secondary mb-1">Compounding Frequency</label>
-                  <select id="ci-frequency" value={frequency} onChange={e => setFrequency(e.target.value)} className="w-full bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary">
+                  <select id="ci-frequency" value={frequency} onChange={e => setFrequency(e.target.value)}>
                     <option value="365">Daily</option>
                     <option value="12">Monthly</option>
                     <option value="4">Quarterly</option>
@@ -334,7 +334,7 @@ const FinancialCalculator: React.FC = () => {
                         <select
                             value={currency}
                             onChange={(e) => setCurrency(e.target.value)}
-                            className="w-full h-12 px-3 bg-brand-surface border border-brand-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                            className="w-full h-12 px-3"
                         >
                             {currencyList.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 
 const DateCalculator: React.FC = () => {
@@ -54,12 +53,12 @@ const DateCalculator: React.FC = () => {
     const DateInput = ({ label, value, setter }: { label: string, value: string, setter: (val: string) => void }) => (
         <div>
             <label className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
-            <input type="date" value={value} onChange={e => setter(e.target.value)} className="w-full bg-gray-900/70 dark:bg-brand-bg border-brand-border rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary" />
+            <input type="date" value={value} onChange={e => setter(e.target.value)} />
         </div>
     );
     
     const NumberInput = ({ value, setter }: { value: string, setter: (val: string) => void }) => (
-        <input type="number" value={value} onChange={e => setter(e.target.value)} className="w-20 bg-gray-900/70 dark:bg-brand-bg border-brand-border rounded-md p-1 text-center" />
+        <input type="number" value={value} onChange={e => setter(e.target.value)} className="w-20 text-center p-1" />
     );
 
     return (

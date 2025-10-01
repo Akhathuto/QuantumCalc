@@ -6,10 +6,21 @@ import { create, all } from 'mathjs';
 import { Loader, Brain, FlaskConical } from 'lucide-react';
 
 const math = create(all);
-// Add nPr and nCr functions
+// Add nPr, nCr, and pmt functions
 math.import({
   nPr: (n: number, k: number) => math.permutations(n, k),
   nCr: (n: number, k: number) => math.combinations(n, k),
+  pmt: (annualRatePercent: number, termYears: number, principal: number) => {
+    const monthlyRate = annualRatePercent / 100 / 12;
+    const numberOfPayments = termYears * 12;
+    if (isNaN(principal) || isNaN(monthlyRate) || isNaN(numberOfPayments) || principal <= 0 || termYears <= 0) {
+      throw new Error("Invalid pmt() args: principal and years must be positive.");
+    }
+    if (monthlyRate === 0) {
+      return principal / numberOfPayments;
+    }
+    return principal * (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+  },
 }, { override: true });
 
 
@@ -196,7 +207,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
         .replace(/−/g, '-');
 
       const evalResult = parser.evaluate(sanitizedExpression);
-      const resultStr = String(parseFloat(evalResult.toFixed(10)));
+      const resultStr = math.format(evalResult, { precision: 14 });
       
       const newHistoryEntry = { expression: fullExpression, result: resultStr, timestamp: new Date().toISOString() };
       addToHistory(newHistoryEntry);
@@ -210,8 +221,8 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
       setExplanation(null);
       const expl = await getFormulaExplanation(sanitizedExpression);
       setExplanation(expl);
-    } catch (e) {
-      setError('Invalid Expression');
+    } catch (e: any) {
+      setError(e.message || 'Invalid Expression');
     } finally {
       setIsLoading(false);
       setIsSecond(false);
@@ -260,12 +271,12 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
   };
 
   const styles = {
-    op: 'bg-brand-secondary hover:bg-orange-500 text-white',
-    mem: 'bg-teal-600 hover:bg-teal-500 text-white',
-    clear: 'bg-red-500/80 hover:bg-red-500 text-white',
-    num: 'bg-brand-surface hover:bg-gray-600 text-brand-text',
+    op: 'bg-brand-secondary/90 hover:bg-brand-secondary text-white',
+    mem: 'bg-brand-accent/80 hover:bg-brand-accent text-white',
+    clear: 'bg-brand-danger/80 hover:bg-brand-danger text-white',
+    num: 'bg-brand-surface hover:bg-brand-border text-brand-text',
     func: 'bg-brand-primary/80 hover:bg-brand-primary text-white',
-    active: 'bg-brand-primary text-white',
+    active: 'bg-brand-primary text-white ring-2 ring-white',
   };
 
   const buttonGrid: { label: string, secondLabel?: string, action: any, secondAction?: any, className: string, colSpan?: number, active?: boolean, title?: string, secondTitle?: string }[][] = [
@@ -337,9 +348,9 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     <>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
-            <div className="bg-gray-900/50 rounded-lg p-4 text-right min-h-[160px] flex flex-col justify-between relative border border-brand-border">
+            <div className="bg-brand-surface/50 rounded-lg p-4 text-right min-h-[160px] flex flex-col justify-between relative border border-brand-border shadow-inner">
                 {/* Ticker Tape */}
-                <div className="h-20 overflow-y-auto text-right text-sm text-brand-text-secondary pr-1 scrollbar-thin scrollbar-thumb-brand-surface">
+                <div className="h-20 overflow-y-auto text-right text-sm text-brand-text-secondary pr-1">
                     {tickerHistory.map((item, index) => (
                         <div key={item.timestamp + index} className="opacity-70 animate-fade-in-down">
                             <span className="truncate">{item.expression} = </span>
@@ -353,7 +364,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
                     <div className="absolute top-2 left-3 flex items-center gap-4 text-xs font-bold z-10">
                         {isSecond && <span className="bg-yellow-500 text-black px-1.5 py-0.5 rounded animate-fade-in-down">2nd</span>}
                         <span className="text-brand-primary">{angleMode.toUpperCase()}</span>
-                        {memory !== null && <span className="text-teal-400 animate-fade-in-down">M</span>}
+                        {memory !== null && <span className="text-brand-accent animate-fade-in-down">M</span>}
                     </div>
                     {/* Expression Line */}
                     <div className="text-brand-text-secondary text-xl break-words h-7 overflow-x-auto text-right font-mono transition-opacity duration-300" style={{ scrollbarWidth: 'none' }}>{expression || ' '}</div>
@@ -362,13 +373,13 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
                         {currentInput}
                     </div>
                      {/* Error Line */}
-                    <div className="text-red-400 text-sm font-semibold h-5 text-right transition-opacity duration-300">
+                    <div className="text-brand-danger text-sm font-semibold h-5 text-right transition-opacity duration-300">
                       {error && <span className="animate-fade-in-down">{error}</span>}
                     </div>
                 </div>
             </div>
             
-             <div className="grid grid-cols-5 gap-2">
+             <div className="grid grid-cols-5 gap-2 mt-4">
               {buttonGrid.map((row, rowIndex) =>
                 row.map((b, colIndex) => (
                   <div key={`${rowIndex}-${colIndex}`} className={`col-span-${b.colSpan || 1}`}>
@@ -386,7 +397,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
             
            <div className="flex justify-center gap-2 mt-4">
               {angleModes.map(mode => (
-                  <button key={mode.id} onClick={() => setAngleMode(mode.id)} className={`px-4 py-1 rounded-full text-sm font-semibold transition-colors ${angleMode === mode.id ? 'bg-brand-primary text-white' : 'bg-brand-surface hover:bg-gray-600'}`}>
+                  <button key={mode.id} onClick={() => setAngleMode(mode.id)} className={`px-4 py-1 rounded-full text-sm font-semibold transition-colors ${angleMode === mode.id ? 'bg-brand-primary text-white' : 'bg-brand-surface hover:bg-brand-border'}`}>
                       {mode.label}
                   </button>
               ))}

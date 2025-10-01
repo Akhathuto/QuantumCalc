@@ -2,32 +2,31 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Explanation } from '../types';
 
 const getAiClient = (): GoogleGenAI | null => {
-  // Prioritize user-provided key from localStorage
-  const userApiKey = localStorage.getItem('geminiApiKey');
-  const apiKey = userApiKey || process.env.API_KEY;
+  const apiKey = process.env.API_KEY;
 
   if (!apiKey) {
+    console.error("Gemini API key is not configured. Please set the API_KEY environment variable.");
     return null;
   }
   return new GoogleGenAI({ apiKey });
 };
 
 const missingKeyExplanation: Explanation = {
-    functionName: "API Key Not Set",
+    functionName: "API Key Not Configured",
     formula: "N/A",
-    description: "Please set your Gemini API key in the Settings page to use AI-powered features.",
-    example: "You can get a free API key from Google AI Studio."
+    description: "The Gemini API key has not been configured for this application. Please contact the administrator to enable AI-powered features.",
+    example: "An administrator needs to set the API_KEY environment variable."
 };
 
 const invalidKeyExplanation: Explanation = {
     functionName: "Invalid API Key",
     formula: "N/A",
-    description: "The provided Gemini API key is invalid or has expired. Please check your key in the Settings page.",
-    example: "Ensure your key is correct and has the necessary permissions."
+    description: "The provided Gemini API key is invalid or has expired. The application administrator needs to verify the key.",
+    example: "The configured API key may be incorrect or lack necessary permissions."
 };
 
-const missingKeyForecast: string = "Please set your Gemini API key in the Settings page to use AI-powered features.";
-const invalidKeyForecast: string = "The provided Gemini API key is invalid. Please check it in Settings.";
+const missingKeyForecast: string = "The Gemini API key has not been configured. Please contact the administrator.";
+const invalidKeyForecast: string = "The provided Gemini API key is invalid. Please contact the administrator.";
 
 
 export const getFormulaExplanation = async (expression: string): Promise<Explanation | null> => {
@@ -38,8 +37,8 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
 
   try {
     const prompt = `
-      Analyze the primary mathematical function in this expression: "${expression}".
-      Ignore basic arithmetic. Focus on the most significant function (e.g., sqrt, sin, log, nCr).
+      Analyze the primary mathematical, statistical, or financial function in this expression: "${expression}".
+      Ignore basic arithmetic. Focus on the most significant function (e.g., sqrt, sin, log, nCr, mean, pmt).
 
       Return a JSON object with this exact structure:
       {
@@ -53,9 +52,12 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
         "example": "A simple usage example (e.g., 'sqrt(16) = 4')."
       }
 
-      For trigonometric functions like sin, use 'θ' as the parameter. For logarithms, use 'log_b(x)'. For combinations, use 'nCr(n, k)'.
-      The 'parameters' array should describe each variable in the formula. If there are no parameters (like for Pi), return an empty array.
-      If no specific function is found, return null.
+      GUIDELINES:
+      - For statistical functions that take a list of numbers like mean or std, use 'x₁, x₂, ..., xₙ' for parameters and describe it as 'A set of numbers'. Example: 'mean(2, 4, 9)'.
+      - For the financial function 'pmt', assume the signature is 'pmt(annualRate, termYears, principal)'. Clearly define each parameter.
+      - For trigonometric functions like sin, use 'θ' as the parameter. For logarithms, use 'log_b(x)'. For combinations, use 'nCr(n, k)'.
+      - The 'parameters' array should describe each variable in the formula. If there are no parameters (like for Pi), return an empty array.
+      - If no specific function is found, return null.
     `;
 
     const response = await ai.models.generateContent({
@@ -95,7 +97,7 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
 
   } catch (error) {
     console.error("Error fetching formula explanation from Gemini:", error);
-     if (error instanceof Error && error.message.includes('API key not valid')) {
+     if (error instanceof Error && (error.message.includes('API key not valid') || error.message.includes('API_KEY_INVALID'))) {
        return invalidKeyExplanation;
     }
     return {
@@ -131,7 +133,7 @@ export const getCurrencyForecast = async (from: string, to: string): Promise<str
 
   } catch (error) {
     console.error("Error fetching currency forecast from Gemini:", error);
-    if (error instanceof Error && error.message.includes('API key not valid')) {
+    if (error instanceof Error && (error.message.includes('API key not valid') || error.message.includes('API_KEY_INVALID'))) {
         return invalidKeyForecast;
     }
     return "Could not retrieve analysis at this time. Please try again later.";

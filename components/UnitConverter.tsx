@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
 
@@ -89,18 +88,17 @@ export const UnitConverter: React.FC = () => {
     if (isNaN(inputNum)) return '';
 
     if (category === 'Temperature') {
-      // Fix: Ensure consistent string return type.
-      if (fromUnit === toUnit) return String(inputNum);
       let tempInCelsius: number;
       // Convert to Celsius first
       if (fromUnit === 'Fahrenheit') tempInCelsius = (inputNum - 32) * 5 / 9;
       else if (fromUnit === 'Kelvin') tempInCelsius = inputNum - 273.15;
-      else tempInCelsius = inputNum;
+      else tempInCelsius = inputNum; // Already Celsius
       
       // Convert from Celsius to target
       if (toUnit === 'Fahrenheit') return (tempInCelsius * 9 / 5 + 32).toPrecision(6);
       if (toUnit === 'Kelvin') return (tempInCelsius + 273.15).toPrecision(6);
-      return tempInCelsius.toPrecision(6);
+      if (toUnit === 'Celsius') return tempInCelsius.toPrecision(6);
+      return '';
     }
     
     const categoryData = CONVERSION_DATA[category];
@@ -126,7 +124,7 @@ export const UnitConverter: React.FC = () => {
             id="category"
             value={category}
             onChange={(e) => handleCategoryChange(e.target.value as Category)}
-            className="w-full bg-gray-900/70 border-gray-600 rounded-md p-3 focus:ring-brand-primary focus:border-brand-primary"
+            className="w-full p-3"
           >
             {Object.keys(CONVERSION_DATA).map(cat => <option key={cat}>{cat}</option>)}
           </select>
@@ -139,13 +137,13 @@ export const UnitConverter: React.FC = () => {
                     type="number"
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
-                    className="w-full bg-gray-900/70 border-gray-600 rounded-md p-3 font-mono text-lg focus:ring-brand-primary focus:border-brand-primary"
+                    className="w-full p-3 text-lg"
                 />
                 <select
                     id="from-unit"
                     value={fromUnit}
                     onChange={e => setFromUnit(e.target.value)}
-                    className="w-full mt-2 bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary"
+                    className="w-full mt-2 p-2"
                 >
                     {unitsForCategory.map(unit => <option key={unit}>{unit}</option>)}
                 </select>
@@ -159,14 +157,14 @@ export const UnitConverter: React.FC = () => {
 
             <div className="sm:col-span-2">
                 <label htmlFor="to-unit" className="block text-sm font-medium text-brand-text-secondary mb-1">To</label>
-                <div className="w-full bg-gray-900/50 border-gray-700 rounded-md p-3 font-mono text-lg min-h-[50px] flex items-center">
+                <div className="w-full border-brand-border bg-brand-bg/50 rounded-md p-3 text-lg min-h-[50px] flex items-center">
                     {outputValue}
                 </div>
                 <select
                     id="to-unit"
                     value={toUnit}
                     onChange={e => setToUnit(e.target.value)}
-                    className="w-full mt-2 bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary"
+                    className="w-full mt-2 p-2"
                 >
                     {unitsForCategory.map(unit => <option key={unit}>{unit}</option>)}
                 </select>

@@ -162,12 +162,12 @@ const CurrencyConverter: React.FC = () => {
               type="number"
               value={amountFrom}
               onChange={handleAmountFromChange}
-              className="w-full bg-gray-900/70 border-gray-600 rounded-md p-3 font-mono text-lg focus:ring-brand-primary focus:border-brand-primary"
+              className="text-lg"
             />
             <select
               value={fromCurrency}
               onChange={(e) => setFromCurrency(e.target.value)}
-              className="w-full mt-2 bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary"
+              className="w-full mt-2"
             >
               {currencyOptions.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -186,12 +186,12 @@ const CurrencyConverter: React.FC = () => {
                 type="number"
                 value={amountTo}
                 onChange={handleAmountToChange}
-                className="w-full bg-gray-900/70 border-gray-600 rounded-md p-3 font-mono text-lg focus:ring-brand-primary focus:border-brand-primary"
+                className="text-lg"
             />
             <select
               value={toCurrency}
               onChange={(e) => setToCurrency(e.target.value)}
-              className="w-full mt-2 bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary"
+              className="w-full mt-2"
             >
               {currencyOptions.map(c => <option key={c} value={c}>{c}</option>)}
             </select>

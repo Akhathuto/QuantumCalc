@@ -74,7 +74,7 @@ const Matrix: React.FC = () => {
                     type="number"
                     value={matrix[i] ?? ''}
                     onChange={(e) => handleCellChange(setter, i, e.target.value)}
-                    className="w-full bg-gray-900/70 border-gray-600 rounded-md p-2 text-center focus:ring-brand-primary focus:border-brand-primary"
+                    className="text-center"
                 />
             ))}
         </div>
@@ -89,7 +89,6 @@ const Matrix: React.FC = () => {
                 <select 
                     value={size} 
                     onChange={e => setSize(parseInt(e.target.value))}
-                    className="bg-brand-surface border-gray-600 rounded-md p-2"
                 >
                     <option value={2}>2x2</option>
                     <option value={3}>3x3</option>

@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { create, all } from 'mathjs';
-import Button from './common/Button';
 
 const math = create(all);
 
@@ -65,7 +64,6 @@ const Statistics: React.FC = () => {
                     value={dataStr}
                     onChange={e => setDataStr(e.target.value)}
                     rows={4}
-                    className="w-full bg-gray-900/70 border-gray-600 rounded-md p-3 font-mono focus:ring-brand-primary focus:border-brand-primary"
                     placeholder="e.g., 1, 2, 3, 4, 5"
                 />
             </div>

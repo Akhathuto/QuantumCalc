@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #1a202c;
+  --color-surface: #2d3748;
+  --color-primary: #4299e1;
+  --color-secondary: #ed8936;
+  --color-accent: #48bb78;
+  --color-text: #e2e8f0;
+  --color-text-secondary: #a0aec0;
+  --color-border: #4a5568;
+  --color-danger: #ef4444; /* red-500 */
+}
+html.light {
+  --color-bg: #f7fafc;
+  --color-surface: #ffffff;
+  --color-primary: #3182ce;
+  --color-secondary: #dd6b20;
+  --color-accent: #38a169;
+  --color-text: #2d3748;
+  --color-text-secondary: #718096;
+  --color-border: #e2e8f0;
+  --color-danger: #dc2626; /* red-600 */
+}
+
+@layer base {
+  input, textarea, select {
+    @apply w-full bg-brand-surface border border-brand-border rounded-md p-2 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-colors duration-200;
+  }
+}

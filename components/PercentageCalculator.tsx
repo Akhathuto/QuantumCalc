@@ -11,7 +11,7 @@ interface CalculationCardProps {
 const CalculationCard: React.FC<CalculationCardProps> = ({ title, result, resultLabel }) => (
     <div className="bg-brand-surface/50 p-6 rounded-lg flex flex-col">
         <h3 className="text-xl font-semibold mb-4 text-brand-text h-16 flex items-center">{title}</h3>
-        <div className="mt-auto pt-4 border-t border-gray-700">
+        <div className="mt-auto pt-4 border-t border-brand-border">
             <span className="text-brand-text-secondary">{resultLabel}</span>
             <p className="text-2xl font-bold text-brand-accent font-mono break-all min-h-[36px]">{result}</p>
         </div>
@@ -53,7 +53,7 @@ const PercentageCalculator: React.FC = () => {
         return String(parseFloat(res.toPrecision(10)));
     }, [val5, val6]);
 
-    const inputClasses = "bg-brand-bg border border-gray-600 rounded-md text-brand-text w-24 text-center p-1 mx-1 focus:outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/50";
+    const inputClasses = "w-24 text-center p-1 mx-1";
 
     return (
         <div>
