@@ -89,9 +89,16 @@ Follow these instructions to get a copy of the project up and running on your lo
     *(Note: Replace `https://github.com/your-repo/quantum-calc.git` with the actual repository URL if you have it.)*
 
 2.  **Set up your Gemini API Key:**
-    The AI features of this application (like the Formula Explorer) are powered by the Google Gemini API.
+    The AI features of this application (like the Formula Explorer) are powered by the Google Gemini API. You can set up your key in one of two ways:
+
+    **Option A: In-App Settings (Recommended)**
+    - Once the application is running, navigate to **More > Settings**.
     - Obtain your free API key from [Google AI Studio](https://ai.google.dev/).
-    - The application is configured to read the API key from an environment variable named `API_KEY`. You must make this variable available to the application when you serve it. The specific method for setting this variable depends on the hosting or development environment you use.
+    - Paste your key into the input field and click "Save". The key will be stored securely in your browser's local storage.
+
+    **Option B: For Developers (Environment Variable)**
+    - If you are deploying the application or running it in a development environment where you control environment variables, you can set a fallback key.
+    - The application will read an environment variable named `API_KEY`. The in-app setting will always override this fallback key if it's set by a user.
 
 3.  **Run the application locally:**
     This project uses modern JavaScript modules, so you need to serve it from a local web server. **You cannot simply open the `index.html` file in your browser from your file system.** Here are a few easy ways to start a local server:

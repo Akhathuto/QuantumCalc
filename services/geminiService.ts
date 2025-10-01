@@ -1,9 +1,41 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Explanation } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const getAiClient = (): GoogleGenAI | null => {
+  // Prioritize user-provided key from localStorage
+  const userApiKey = localStorage.getItem('geminiApiKey');
+  const apiKey = userApiKey || process.env.API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
+const missingKeyExplanation: Explanation = {
+    functionName: "API Key Not Set",
+    formula: "N/A",
+    description: "Please set your Gemini API key in the Settings page to use AI-powered features.",
+    example: "You can get a free API key from Google AI Studio."
+};
+
+const invalidKeyExplanation: Explanation = {
+    functionName: "Invalid API Key",
+    formula: "N/A",
+    description: "The provided Gemini API key is invalid or has expired. Please check your key in the Settings page.",
+    example: "Ensure your key is correct and has the necessary permissions."
+};
+
+const missingKeyForecast: string = "Please set your Gemini API key in the Settings page to use AI-powered features.";
+const invalidKeyForecast: string = "The provided Gemini API key is invalid. Please check it in Settings.";
+
 
 export const getFormulaExplanation = async (expression: string): Promise<Explanation | null> => {
+  const ai = getAiClient();
+  if (!ai) {
+    return missingKeyExplanation;
+  }
+
   try {
     const prompt = `
       Analyze the primary mathematical function in this expression: "${expression}".
@@ -63,6 +95,9 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
 
   } catch (error) {
     console.error("Error fetching formula explanation from Gemini:", error);
+     if (error instanceof Error && error.message.includes('API key not valid')) {
+       return invalidKeyExplanation;
+    }
     return {
       functionName: "Error",
       formula: "N/A",
@@ -73,6 +108,11 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
 };
 
 export const getCurrencyForecast = async (from: string, to: string): Promise<string> => {
+  const ai = getAiClient();
+  if (!ai) {
+    return missingKeyForecast;
+  }
+
   try {
     const prompt = `
       Provide a brief, general, and educational analysis of the typical factors influencing the exchange rate between ${from} and ${to}.
@@ -91,6 +131,9 @@ export const getCurrencyForecast = async (from: string, to: string): Promise<str
 
   } catch (error) {
     console.error("Error fetching currency forecast from Gemini:", error);
+    if (error instanceof Error && error.message.includes('API key not valid')) {
+        return invalidKeyForecast;
+    }
     return "Could not retrieve analysis at this time. Please try again later.";
   }
 };

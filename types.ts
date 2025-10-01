@@ -2,6 +2,7 @@ export interface HistoryEntry {
   expression: string;
   result: string;
   timestamp: string;
+  isFavorite?: boolean;
 }
 
 export interface Explanation {
@@ -31,4 +32,5 @@ export type AppTab =
   | 'health'
   | 'history'
   | 'about'
-  | 'terms';
+  | 'terms'
+  | 'settings';

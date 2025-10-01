@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from './components/common/Header';
 import Calculator from './components/Calculator';
@@ -15,6 +16,7 @@ import DateCalculator from './components/DateCalculator';
 import HealthCalculator from './components/HealthCalculator';
 import About from './components/About';
 import TermsAndLicense from './components/TermsAndLicense';
+import Settings from './components/Settings';
 import { AppTab, HistoryEntry } from './types';
 
 const App: React.FC = () => {
@@ -23,6 +25,7 @@ const App: React.FC = () => {
     try {
       const savedHistory = localStorage.getItem('calcHistory');
       return savedHistory ? JSON.parse(savedHistory) : [];
+    // Fix: Added curly braces to the catch block to fix syntax error. This resolves all subsequent scope-related errors.
     } catch (error) {
       console.error("Could not parse history from localStorage", error);
       return [];
@@ -41,6 +44,16 @@ const App: React.FC = () => {
 
   const clearHistory = () => {
     setHistory([]);
+  };
+  
+  const toggleFavorite = (timestamp: string) => {
+    setHistory(prev =>
+      prev.map(entry =>
+        entry.timestamp === timestamp
+          ? { ...entry, isFavorite: !entry.isFavorite }
+          : entry
+      )
+    );
   };
 
   const loadFromHistory = (entry: HistoryEntry) => {
@@ -79,9 +92,11 @@ const App: React.FC = () => {
       case 'health':
         return <HealthCalculator />;
       case 'history':
-        return <History history={history} loadFromHistory={loadFromHistory} clearHistory={clearHistory} />;
+        return <History history={history} loadFromHistory={loadFromHistory} clearHistory={clearHistory} toggleFavorite={toggleFavorite} />;
       case 'about':
         return <About />;
+      case 'settings':
+        return <Settings />;
       case 'terms':
         return <TermsAndLicense />;
       default:

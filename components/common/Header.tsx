@@ -17,7 +17,8 @@ import {
   TestTube,
   HeartPulse,
   MoreHorizontal,
-  FileText
+  FileText,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 import Logo from './Logo';
@@ -99,6 +100,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabClick }) => {
             subTabs={[
               { id: 'history', label: 'History', Icon: History },
               { id: 'about', label: 'About', Icon: Info },
+              { id: 'settings', label: 'Settings', Icon: SettingsIcon },
               { id: 'terms', label: 'Terms & License', Icon: FileText },
             ]}
           />
