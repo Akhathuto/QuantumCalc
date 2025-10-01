@@ -67,9 +67,9 @@ const History: React.FC<HistoryProps> = ({ history, loadFromHistory, clearHistor
         <p className="text-center text-brand-text-secondary py-16">No matching calculations found for "{searchTerm}".</p>
       ) : (
         <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-          {filteredAndSortedHistory.map((item, index) => (
+          {filteredAndSortedHistory.map((item) => (
             <div
-              key={index}
+              key={item.timestamp}
               className={`bg-brand-surface/50 p-4 rounded-lg cursor-pointer hover:bg-brand-surface transition-colors relative ${item.isFavorite ? 'border-l-4 border-yellow-500' : ''}`}
               onClick={() => loadFromHistory(item)}
             >
