@@ -84,8 +84,8 @@ const History: React.FC<HistoryProps> = ({ history, loadFromHistory, clearHistor
               <p className="text-sm text-brand-text-secondary pr-8">
                 {new Date(item.timestamp).toLocaleString()}
               </p>
-              <p className="font-mono text-lg text-brand-text break-all">{item.expression}</p>
-              <p className="font-mono text-xl font-bold text-brand-accent break-all">= {item.result}</p>
+              <p className="font-mono text-lg text-brand-text truncate" title={item.expression}>{item.expression}</p>
+              <p className="font-mono text-xl font-bold text-brand-accent truncate" title={item.result}>= {item.result}</p>
             </div>
           ))}
         </div>
