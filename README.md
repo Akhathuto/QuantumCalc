@@ -155,6 +155,14 @@ Your key is stored securely in your browser's local storage and is never sent to
 
 ---
 
+## Deployment
+
+This project uses Vite for its build process. When you run `npm run build`, Vite will generate the production-ready files in a directory named `dist`.
+
+If you are deploying this application to a hosting service like Vercel, Netlify, or GitHub Pages, you may need to configure the **Output Directory** in your project's build settings. Make sure to set it to `dist` to match Vite's output. If you don't, you might see an error that the build output (e.g., a `build` folder) could not be found.
+
+---
+
 ## Tech Stack
 
 - **Frontend**: React 19, TypeScript

@@ -89,8 +89,7 @@ export const UnitConverter: React.FC = () => {
     if (isNaN(inputNum)) return '';
 
     if (category === 'Temperature') {
-      // Fix: Ensure consistent string return type.
-      if (fromUnit === toUnit) return String(inputNum);
+      if (fromUnit === toUnit) return inputNum.toPrecision(6);
       let tempInCelsius: number;
       // Convert to Celsius first
       if (fromUnit === 'Fahrenheit') tempInCelsius = (inputNum - 32) * 5 / 9;
