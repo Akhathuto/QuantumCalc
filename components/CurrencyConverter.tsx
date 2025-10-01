@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { ArrowRightLeft, Loader, AlertTriangle, TrendingUp } from 'lucide-react';
+import { getCurrencyForecast } from '../services/geminiService';
 
 const API_URL = 'https://open.exchangerate-api.com/v6/latest';
 
@@ -20,6 +21,9 @@ const CurrencyConverter: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  const [isForecastLoading, setIsForecastLoading] = useState(false);
+  const [forecast, setForecast] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchRates = async () => {
       setIsLoading(true);
@@ -49,7 +53,7 @@ const CurrencyConverter: React.FC = () => {
 
   const currencyOptions = useMemo(() => {
     if (!ratesData) return [];
-    return Object.keys(ratesData.rates);
+    return Object.keys(ratesData.rates).sort();
   }, [ratesData]);
 
   const calculateConversion = useCallback((amount: string, from: string, to: string, direction: 'from' | 'to') => {
@@ -115,6 +119,15 @@ const CurrencyConverter: React.FC = () => {
     const rate = rateTo / rateFrom;
     return `1 ${fromCurrency} = ${rate.toFixed(4)} ${toCurrency}`;
   }, [fromCurrency, toCurrency, ratesData]);
+
+  const handleGetForecast = async () => {
+      if (!fromCurrency || !toCurrency) return;
+      setIsForecastLoading(true);
+      setForecast(null); // Clear previous forecast
+      const analysis = await getCurrencyForecast(fromCurrency, toCurrency);
+      setForecast(analysis);
+      setIsForecastLoading(false);
+  };
 
   if (isLoading) {
     return (
@@ -187,9 +200,30 @@ const CurrencyConverter: React.FC = () => {
         <div className="text-center font-mono text-brand-accent mt-6">
           {exchangeRateText}
         </div>
-        <div className="flex items-center justify-center gap-2 mt-4 text-sm text-brand-text-secondary opacity-60">
-            <TrendingUp size={16} />
-            <span>Short-term forecast feature coming soon.</span>
+        <div className="mt-6 text-center">
+          <button
+            onClick={handleGetForecast}
+            disabled={isForecastLoading}
+            className="flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-brand-primary/20 text-brand-primary rounded-lg hover:bg-brand-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isForecastLoading ? (
+              <>
+                <Loader size={16} className="animate-spin" />
+                <span>Analyzing...</span>
+              </>
+            ) : (
+              <>
+                <TrendingUp size={16} />
+                <span>Get AI Analysis of Factors</span>
+              </>
+            )}
+          </button>
+          {forecast && !isForecastLoading && (
+            <div className="mt-4 p-4 bg-brand-bg text-brand-text-secondary text-sm rounded-lg animate-fade-in-down text-left">
+              <p className="font-semibold text-brand-text mb-2">General Analysis:</p>
+              <p>{forecast}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

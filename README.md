@@ -68,6 +68,59 @@ QuantumCalc is more than one calculator—it's a massive collection of specializ
 
 ---
 
+## Getting Started
+
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+
+- A modern web browser that supports ES Modules.
+- A code editor (e.g., [Visual Studio Code](https://code.visualstudio.com/)).
+- [Node.js](https://nodejs.org/) (recommended for the easiest setup).
+
+### Installation
+
+1.  **Clone the repository:**
+    Open your terminal and run the following command to clone the project files to your local machine.
+    ```bash
+    git clone https://github.com/your-repo/quantum-calc.git
+    cd quantum-calc
+    ```
+    *(Note: Replace `https://github.com/your-repo/quantum-calc.git` with the actual repository URL if you have it.)*
+
+2.  **Set up your Gemini API Key:**
+    The AI features of this application (like the Formula Explorer) are powered by the Google Gemini API.
+    - Obtain your free API key from [Google AI Studio](https://ai.google.dev/).
+    - The application is configured to read the API key from an environment variable named `API_KEY`. You must make this variable available to the application when you serve it. The specific method for setting this variable depends on the hosting or development environment you use.
+
+3.  **Run the application locally:**
+    This project uses modern JavaScript modules, so you need to serve it from a local web server. **You cannot simply open the `index.html` file in your browser from your file system.** Here are a few easy ways to start a local server:
+
+    #### Option 1: Using `npx serve` (Recommended)
+    If you have Node.js installed, this is the simplest method. In the project's root directory, run:
+    ```bash
+    npx serve
+    ```
+    This will start a local server. Open your web browser and navigate to the URL it provides (usually `http://localhost:3000`).
+
+    #### Option 2: Using a VS Code Extension
+    If you use Visual Studio Code, the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension is an excellent choice.
+    - Install the extension from the VS Code Marketplace.
+    - Right-click the `index.html` file in the Explorer panel and select "Open with Live Server".
+
+    #### Option 3: Using Python's built-in server
+    If you have Python installed, you can run one of the following commands in the project's root directory:
+    ```bash
+    # For Python 3
+    python -m http.server
+
+    # For Python 2
+    python -m SimpleHTTPServer
+    ```
+    This will start a server, typically on `http://localhost:8000`.
+
+---
+
 ## Tech Stack
 
 - **Frontend**: React 19, TypeScript

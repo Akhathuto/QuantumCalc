@@ -71,3 +71,26 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
     };
   }
 };
+
+export const getCurrencyForecast = async (from: string, to: string): Promise<string> => {
+  try {
+    const prompt = `
+      Provide a brief, general, and educational analysis of the typical factors influencing the exchange rate between ${from} and ${to}.
+      Do NOT give financial advice, predict future prices, or use speculative language like "will rise" or "will fall".
+      Focus on general economic principles.
+      For example: "The ${from}/${to} rate is often influenced by factors such as the interest rate decisions of their respective central banks, inflation data, and trade balances."
+      Keep the response under 60 words.
+    `;
+    
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+    });
+    
+    return response.text.trim();
+
+  } catch (error) {
+    console.error("Error fetching currency forecast from Gemini:", error);
+    return "Could not retrieve analysis at this time. Please try again later.";
+  }
+};

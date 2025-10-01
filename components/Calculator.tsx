@@ -138,6 +138,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     } else {
         setCurrentInput(prev => {
             if (prev === '0' && value !== '.') return value;
+            if (value === '.' && prev.includes('.')) return prev;
             return prev + value;
         });
     }
@@ -150,11 +151,11 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     
     if (isResultState) {
         setExpression(`${display}${currentInput})`);
-        setCurrentInput(''); // The function is now in the expression
+        setCurrentInput(''); 
         setIsResultState(false);
     } else {
         setCurrentInput(prev => {
-            if(prev === '0') return `${display}`;
+            if(prev === '0' || prev === '') return `${display}`;
             return `${prev}${display}`;
         });
     }
@@ -173,7 +174,16 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
   const calculate = useCallback(async () => {
     if (error || isLoading) return;
     
-    const fullExpression = (expression + currentInput).trim();
+    let fullExpression = (expression + currentInput).trim();
+    if (!fullExpression) return;
+    
+    // Auto-balance parentheses
+    const openParen = (fullExpression.match(/\(/g) || []).length;
+    const closeParen = (fullExpression.match(/\)/g) || []).length;
+    if (openParen > closeParen) {
+        fullExpression += ')'.repeat(openParen - closeParen);
+    }
+
     setError(null);
 
     try {
@@ -234,96 +244,90 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
   
   const handleOp = (op: string) => {
     setError(null);
+    if (currentInput === '' && expression.length > 0) {
+        // change the last operator
+        setExpression(prev => prev.trim().slice(0, -1) + op + ' ');
+        return;
+    }
     if (isResultState) {
       setExpression(currentInput + ` ${op} `);
-      setCurrentInput('0');
+      setCurrentInput('');
       setIsResultState(false);
     } else {
-      setExpression(prev => (prev + currentInput + ` ${op} `).trim() + ' ');
-      setCurrentInput('0');
+      setExpression(prev => (prev + currentInput + ` ${op} `));
+      setCurrentInput('');
     }
   };
 
-  const getStyle = (styleType?: string, active?: boolean) => {
-    if (active) return 'bg-brand-primary text-white';
-    switch (styleType) {
-        case 'op': return 'bg-brand-secondary hover:bg-orange-500 text-white';
-        case 'mem': return 'bg-teal-600 hover:bg-teal-500 text-white';
-        case 'clear': return 'bg-red-500/80 hover:bg-red-500 text-white';
-        case 'num': return 'bg-brand-surface hover:bg-gray-600 text-brand-text';
-        case 'func':
-        default: return 'bg-brand-primary/80 hover:bg-brand-primary text-white';
-    }
-  };
-  
-  const getColSpanClass = (span?: number) => {
-    switch(span) {
-        case 2: return 'col-span-2';
-        case 3: return 'col-span-3';
-        default: return 'col-span-1';
-    }
+  const styles = {
+    op: 'bg-brand-secondary hover:bg-orange-500 text-white',
+    mem: 'bg-teal-600 hover:bg-teal-500 text-white',
+    clear: 'bg-red-500/80 hover:bg-red-500 text-white',
+    num: 'bg-brand-surface hover:bg-gray-600 text-brand-text',
+    func: 'bg-brand-primary/80 hover:bg-brand-primary text-white',
+    active: 'bg-brand-primary text-white',
   };
 
-  const buttonGrid: { label: string, secondLabel?: string, action: any, secondAction?: any, style: string, colSpan?: number, active?: boolean, title?: string, secondTitle?: string }[][] = [
+  const buttonGrid: { label: string, secondLabel?: string, action: any, secondAction?: any, className: string, colSpan?: number, active?: boolean, title?: string, secondTitle?: string }[][] = [
       [
-          { label: '2nd', action: () => setIsSecond(s => !s), style: 'func', active: isSecond, title: 'Toggle Secondary Functions' },
-          { label: 'π', action: () => handleInput('π'), style: 'func', title: 'Pi (3.141...)' },
-          { label: 'e', action: () => handleInput('e'), style: 'func', title: "Euler's Number (2.718...)" },
-          { label: 'AC', action: clear, style: 'clear', title: 'All Clear (Esc)' },
-          { label: 'del', action: backspace, style: 'clear', title: 'Delete (Backspace)' },
+          { label: '2nd', action: () => setIsSecond(s => !s), className: styles.func, active: isSecond, title: 'Toggle Secondary Functions' },
+          { label: 'π', action: () => handleInput('π'), className: styles.func, title: 'Pi (3.141...)' },
+          { label: 'e', action: () => handleInput('e'), className: styles.func, title: "Euler's Number (2.718...)" },
+          { label: 'AC', action: clear, className: styles.clear, title: 'All Clear (Esc)' },
+          { label: 'del', action: backspace, className: styles.clear, title: 'Delete (Backspace)' },
       ],
       [
-          { label: 'x²', secondLabel: 'x³', action: () => handleInput('^2'), secondAction: () => handleInput('^3'), style: 'func', title: 'Square (x^2)', secondTitle: 'Cube (x^3)' },
-          { label: '1/x', secondLabel: 'rand', action: () => handleInput('^(-1)'), secondAction: () => { setCurrentInput(String(Math.random())); setIsResultState(false); }, style: 'func', title: 'Reciprocal (1/x)', secondTitle: 'Random Number' },
-          { label: '√', secondLabel: '∛', action: () => handleFunction('sqrt(', '√('), secondAction: () => handleFunction('cbrt(', '∛('), style: 'func', title: 'Square Root (sqrt)', secondTitle: 'Cube Root (cbrt)' },
-          { label: '(', action: () => handleInput('('), style: 'func', title: 'Open Parenthesis' },
-          { label: ')', action: () => handleInput(')'), style: 'func', title: 'Close Parenthesis' },
+          { label: 'x²', secondLabel: 'x³', action: () => handleInput('^2'), secondAction: () => handleInput('^3'), className: styles.func, title: 'Square (x^2)', secondTitle: 'Cube (x^3)' },
+          { label: '1/x', secondLabel: 'rand', action: () => handleInput('^(-1)'), secondAction: () => { setCurrentInput(String(Math.random())); setIsResultState(false); }, className: styles.func, title: 'Reciprocal (1/x)', secondTitle: 'Random Number' },
+          { label: '√', secondLabel: '∛', action: () => handleFunction('sqrt(', '√('), secondAction: () => handleFunction('cbrt(', '∛('), className: styles.func, title: 'Square Root (sqrt)', secondTitle: 'Cube Root (cbrt)' },
+          { label: '(', action: () => handleInput('('), className: styles.func, title: 'Open Parenthesis' },
+          { label: ')', action: () => handleInput(')'), className: styles.func, title: 'Close Parenthesis' },
       ],
       [
-          { label: 'sin', secondLabel: 'asin', action: () => handleFunction('sin('), secondAction: () => handleFunction('asin('), style: 'func', title: 'Sine', secondTitle: 'Inverse Sine (arcsin)' },
-          { label: 'cos', secondLabel: 'acos', action: () => handleFunction('cos('), secondAction: () => handleFunction('acos('), style: 'func', title: 'Cosine', secondTitle: 'Inverse Cosine (arccos)' },
-          { label: 'tan', secondLabel: 'atan', action: () => handleFunction('tan('), secondAction: () => handleFunction('atan('), style: 'func', title: 'Tangent', secondTitle: 'Inverse Tangent (arctan)' },
-          { label: 'log', secondLabel: 'log₂', action: () => handleFunction('log('), secondAction: () => handleFunction('log2('), style: 'func', title: 'Logarithm (base 10)', secondTitle: 'Logarithm (base 2)' },
-          { label: 'ln', action: () => handleFunction('ln('), style: 'func', title: 'Natural Logarithm (ln)' },
+          { label: 'sin', secondLabel: 'asin', action: () => handleFunction('sin('), secondAction: () => handleFunction('asin('), className: styles.func, title: 'Sine', secondTitle: 'Inverse Sine (arcsin)' },
+          { label: 'cos', secondLabel: 'acos', action: () => handleFunction('cos('), secondAction: () => handleFunction('acos('), className: styles.func, title: 'Cosine', secondTitle: 'Inverse Cosine (arccos)' },
+          { label: 'tan', secondLabel: 'atan', action: () => handleFunction('tan('), secondAction: () => handleFunction('atan('), className: styles.func, title: 'Tangent', secondTitle: 'Inverse Tangent (arctan)' },
+          { label: 'log', secondLabel: 'log₂', action: () => handleFunction('log10('), secondAction: () => handleFunction('log2('), className: styles.func, title: 'Logarithm (base 10)', secondTitle: 'Logarithm (base 2)' },
+          { label: 'ln', action: () => handleFunction('log('), className: styles.func, title: 'Natural Logarithm (ln)' },
       ],
       [
-          { label: 'sinh', secondLabel: 'asinh', action: () => handleFunction('sinh('), secondAction: () => handleFunction('asinh('), style: 'func', title: 'Hyperbolic Sine', secondTitle: 'Inverse Hyperbolic Sine' },
-          { label: 'cosh', secondLabel: 'acosh', action: () => handleFunction('cosh('), secondAction: () => handleFunction('acosh('), style: 'func', title: 'Hyperbolic Cosine', secondTitle: 'Inverse Hyperbolic Cosine' },
-          { label: 'tanh', secondLabel: 'atanh', action: () => handleFunction('tanh('), secondAction: () => handleFunction('atanh('), style: 'func', title: 'Hyperbolic Tangent', secondTitle: 'Inverse Hyperbolic Tangent' },
-          { label: 'nCr', action: () => handleFunction('nCr('), style: 'func', title: 'Combinations' },
-          { label: 'nPr', action: () => handleFunction('nPr('), style: 'func', title: 'Permutations' },
+          { label: 'sinh', secondLabel: 'asinh', action: () => handleFunction('sinh('), secondAction: () => handleFunction('asinh('), className: styles.func, title: 'Hyperbolic Sine', secondTitle: 'Inverse Hyperbolic Sine' },
+          { label: 'cosh', secondLabel: 'acosh', action: () => handleFunction('cosh('), secondAction: () => handleFunction('acosh('), className: styles.func, title: 'Hyperbolic Cosine', secondTitle: 'Inverse Hyperbolic Cosine' },
+          { label: 'tanh', secondLabel: 'atanh', action: () => handleFunction('tanh('), secondAction: () => handleFunction('atanh('), className: styles.func, title: 'Hyperbolic Tangent', secondTitle: 'Inverse Hyperbolic Tangent' },
+          { label: 'nCr', action: () => handleFunction('nCr('), className: styles.func, title: 'Combinations' },
+          { label: 'nPr', action: () => handleFunction('nPr('), className: styles.func, title: 'Permutations' },
       ],
        [
-          { label: '7', action: () => handleInput('7'), style: 'num' },
-          { label: '8', action: () => handleInput('8'), style: 'num' },
-          { label: '9', action: () => handleInput('9'), style: 'num' },
-          { label: '÷', action: () => handleOp('÷'), style: 'op', title: 'Divide' },
-          { label: 'MC', action: memoryClear, style: 'mem', title: 'Memory Clear' },
+          { label: '7', action: () => handleInput('7'), className: styles.num },
+          { label: '8', action: () => handleInput('8'), className: styles.num },
+          { label: '9', action: () => handleInput('9'), className: styles.num },
+          { label: '÷', action: () => handleOp('÷'), className: styles.op, title: 'Divide' },
+          { label: 'MC', action: memoryClear, className: styles.mem, title: 'Memory Clear' },
       ],
       [
-          { label: '4', action: () => handleInput('4'), style: 'num' },
-          { label: '5', action: () => handleInput('5'), style: 'num' },
-          { label: '6', action: () => handleInput('6'), style: 'num' },
-          { label: '×', action: () => handleOp('×'), style: 'op', title: 'Multiply' },
-          { label: 'MR', action: memoryRecall, style: 'mem', title: 'Memory Recall' },
+          { label: '4', action: () => handleInput('4'), className: styles.num },
+          { label: '5', action: () => handleInput('5'), className: styles.num },
+          { label: '6', action: () => handleInput('6'), className: styles.num },
+          { label: '×', action: () => handleOp('×'), className: styles.op, title: 'Multiply' },
+          { label: 'MR', action: memoryRecall, className: styles.mem, title: 'Memory Recall' },
       ],
       [
-          { label: '1', action: () => handleInput('1'), style: 'num' },
-          { label: '2', action: () => handleInput('2'), style: 'num' },
-          { label: '3', action: () => handleInput('3'), style: 'num' },
-          { label: '−', action: () => handleOp('−'), style: 'op', title: 'Subtract' },
-          { label: 'M+', action: memoryAdd, style: 'mem', title: 'Memory Add' },
+          { label: '1', action: () => handleInput('1'), className: styles.num },
+          { label: '2', action: () => handleInput('2'), className: styles.num },
+          { label: '3', action: () => handleInput('3'), className: styles.num },
+          { label: '−', action: () => handleOp('−'), className: styles.op, title: 'Subtract' },
+          { label: 'M+', action: memoryAdd, className: styles.mem, title: 'Memory Add' },
       ],
       [
-          { label: '0', action: () => handleInput('0'), style: 'num', colSpan: 2 },
-          { label: '.', action: () => handleInput('.'), style: 'num', title: 'Decimal Point' },
-          { label: '+', action: () => handleOp('+'), style: 'op', title: 'Add' },
-          { label: 'M-', action: memorySubtract, style: 'mem', title: 'Memory Subtract' },
+          { label: '0', action: () => handleInput('0'), className: styles.num, colSpan: 2 },
+          { label: '.', action: () => handleInput('.'), className: styles.num, title: 'Decimal Point' },
+          { label: '+', action: () => handleOp('+'), className: styles.op, title: 'Add' },
+          { label: 'M-', action: memorySubtract, className: styles.mem, title: 'Memory Subtract' },
       ],
       [
-          { label: '%', action: () => handleInput('%'), style: 'func', title: 'Percentage' },
-          { label: 'EE', action: () => handleInput('e'), style: 'func', title: 'Exponent (Scientific Notation)' },
-          { label: '=', action: calculate, style: 'op', colSpan: 3, title: 'Equals (Enter)' },
+          { label: '%', action: () => handleInput('%'), className: styles.func, title: 'Percentage' },
+          { label: 'EE', action: () => handleInput('e+'), className: styles.func, title: 'Exponent (Scientific Notation)' },
+          { label: '=', action: calculate, className: styles.op, colSpan: 3, title: 'Equals (Enter)' },
       ]
   ];
 
@@ -333,42 +337,51 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     <>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
-            <div className="bg-gray-900/50 rounded-lg p-4 mb-4 text-right min-h-[160px] flex flex-col justify-between relative border border-brand-border">
-              <div className="h-16 overflow-y-auto text-right text-sm text-brand-text-secondary pr-1">
-                  {tickerHistory.map((item, index) => (
-                      <div key={index} className="opacity-70">
-                          <span>{item.expression} = </span>
-                          <span className="font-semibold">{item.result}</span>
-                      </div>
-                  ))}
-              </div>
-
-              <div className="border-t border-brand-border/50 pt-2">
-                  <div className="absolute top-2 left-3 flex items-center gap-4 text-xs font-bold z-10">
-                      {isSecond && <span className="bg-yellow-500 text-black px-1.5 py-0.5 rounded">2nd</span>}
-                      <span className="text-brand-primary">{angleMode.toUpperCase()}</span>
-                      {memory !== null && <span className="text-teal-400">M</span>}
-                  </div>
-                  <div className="text-brand-text-secondary text-xl break-words h-7 overflow-x-auto text-right font-mono">{expression || ' '}</div>
-                  <div className="text-4xl font-bold text-brand-text break-words h-12 overflow-x-auto text-right font-mono">
-                      {currentInput}
-                  </div>
-                  {error && <div className="text-red-400 text-sm font-semibold h-5 text-right">{error}</div>}
-              </div>
-          </div>
-          
-           <div className="grid grid-cols-5 gap-2">
-            {buttonGrid.flat().map((b, index) => (
-                <div key={index} className={getColSpanClass(b.colSpan)}>
-                    <Button
-                        onClick={isSecond && b.secondAction ? b.secondAction : b.action}
-                        className={`${getStyle(b.style, b.active)} h-12 text-base w-full`}
-                        title={isSecond && b.secondTitle ? b.secondTitle : b.title}
-                    >
-                        {isSecond && b.secondLabel ? b.secondLabel : b.label}
-                    </Button>
+            <div className="bg-gray-900/50 rounded-lg p-4 text-right min-h-[160px] flex flex-col justify-between relative border border-brand-border">
+                {/* Ticker Tape */}
+                <div className="h-20 overflow-y-auto text-right text-sm text-brand-text-secondary pr-1 scrollbar-thin scrollbar-thumb-brand-surface">
+                    {tickerHistory.map((item, index) => (
+                        <div key={item.timestamp + index} className="opacity-70 animate-fade-in-down">
+                            <span className="truncate">{item.expression} = </span>
+                            <span className="font-semibold">{item.result}</span>
+                        </div>
+                    ))}
                 </div>
-            ))}
+
+                {/* Main Display */}
+                <div className="border-t border-brand-border/50 pt-2 relative">
+                    <div className="absolute top-2 left-3 flex items-center gap-4 text-xs font-bold z-10">
+                        {isSecond && <span className="bg-yellow-500 text-black px-1.5 py-0.5 rounded animate-fade-in-down">2nd</span>}
+                        <span className="text-brand-primary">{angleMode.toUpperCase()}</span>
+                        {memory !== null && <span className="text-teal-400 animate-fade-in-down">M</span>}
+                    </div>
+                    {/* Expression Line */}
+                    <div className="text-brand-text-secondary text-xl break-words h-7 overflow-x-auto text-right font-mono transition-opacity duration-300" style={{ scrollbarWidth: 'none' }}>{expression || ' '}</div>
+                    {/* Input/Result Line */}
+                    <div className="text-4xl font-bold text-brand-text break-words min-h-[48px] overflow-x-auto text-right font-mono transition-all duration-200">
+                        {currentInput}
+                    </div>
+                     {/* Error Line */}
+                    <div className="text-red-400 text-sm font-semibold h-5 text-right transition-opacity duration-300">
+                      {error && <span className="animate-fade-in-down">{error}</span>}
+                    </div>
+                </div>
+            </div>
+            
+             <div className="grid grid-cols-5 gap-2">
+              {buttonGrid.map((row, rowIndex) =>
+                row.map((b, colIndex) => (
+                  <div key={`${rowIndex}-${colIndex}`} className={`col-span-${b.colSpan || 1}`}>
+                    <Button
+                      onClick={isSecond && b.secondAction ? b.secondAction : b.action}
+                      className={`${b.active ? styles.active : b.className} h-12 text-base w-full`}
+                      title={isSecond && b.secondTitle ? b.secondTitle : b.title}
+                    >
+                      {isSecond && b.secondLabel ? b.secondLabel : b.label}
+                    </Button>
+                  </div>
+                ))
+              )}
             </div>
             
            <div className="flex justify-center gap-2 mt-4">
