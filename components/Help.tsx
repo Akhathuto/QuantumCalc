@@ -63,7 +63,7 @@ const Help: React.FC = () => {
                         <ol>
                             <li>Visit <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer">Google AI Studio</a> to get your key.</li>
                             <li>In QuantumCalc, go to <strong>More &gt; Settings</strong>.</li>
-                            <li>Paste your API key into the input field and click <strong>Save</strong>.</li>
+                            <li>Paste your API key into the input field and click <strong>Save Key</strong>.</li>
                         </ol>
                         Your key is stored securely in your browser's local storage and is never sent to our servers.
                     </p>

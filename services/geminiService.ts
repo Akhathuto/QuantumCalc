@@ -1,18 +1,15 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Explanation } from '../types';
 
 const getAiClient = (): GoogleGenAI | null => {
-  let userApiKey: string | null = null;
+  let apiKey: string | null = null;
   try {
-    // Prioritize user-provided key from localStorage
-    userApiKey = localStorage.getItem('geminiApiKey');
+    apiKey = localStorage.getItem('geminiApiKey');
   } catch (error) {
-    console.error("Could not access localStorage to get API key:", error);
+    console.error("Could not access localStorage for API key:", error);
+    return null;
   }
   
-  const apiKey = userApiKey || process.env.API_KEY;
-
   if (!apiKey) {
     return null;
   }
@@ -20,21 +17,21 @@ const getAiClient = (): GoogleGenAI | null => {
 };
 
 const missingKeyExplanation: Explanation = {
-    functionName: "API Key Not Set",
+    functionName: "AI Feature Unavailable",
     formula: "N/A",
-    description: "Please set your Gemini API key in the Settings page to use AI-powered features.",
+    description: "To enable AI-powered features, please add your Google Gemini API key in the Settings page (under the 'More' tab).",
     example: "You can get a free API key from Google AI Studio."
 };
 
-const invalidKeyExplanation: Explanation = {
-    functionName: "Invalid API Key",
+const genericErrorExplanation: Explanation = {
+    functionName: "Error",
     formula: "N/A",
-    description: "The provided Gemini API key is invalid or has expired. Please check your key in the Settings page.",
-    example: "Ensure your key is correct and has the necessary permissions."
+    description: "Could not fetch an explanation at this time. The AI service might be temporarily unavailable or the request could not be processed.",
+    example: "Please try again later."
 };
 
-const missingKeyForecast: string = "Please set your Gemini API key in the Settings page to use AI-powered features.";
-const invalidKeyForecast: string = "The provided Gemini API key is invalid. Please check it in Settings.";
+const missingKeyForecast: string = "AI-powered features are currently unavailable. Please add your Gemini API key in Settings.";
+const genericErrorForecast: string = "Could not retrieve analysis at this time. Please try again later.";
 
 
 export const getFormulaExplanation = async (expression: string): Promise<Explanation | null> => {
@@ -105,15 +102,7 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
 
   } catch (error) {
     console.error("Error fetching formula explanation from Gemini:", error);
-     if (error instanceof Error && error.message.includes('API key not valid')) {
-       return invalidKeyExplanation;
-    }
-    return {
-      functionName: "Error",
-      formula: "N/A",
-      description: "Could not fetch an explanation at this time. The Gemini API might be unavailable or the request could not be processed.",
-      example: "Please try another calculation."
-    };
+    return genericErrorExplanation;
   }
 };
 
@@ -141,10 +130,7 @@ export const getCurrencyForecast = async (from: string, to: string): Promise<str
 
   } catch (error) {
     console.error("Error fetching currency forecast from Gemini:", error);
-    if (error instanceof Error && error.message.includes('API key not valid')) {
-        return invalidKeyForecast;
-    }
-    return "Could not retrieve analysis at this time. Please try again later.";
+    return genericErrorForecast;
   }
 };
 
@@ -191,9 +177,6 @@ export const getAutoLoanAnalysis = async (details: AutoLoanDetails): Promise<str
 
   } catch (error) {
     console.error("Error fetching auto loan analysis from Gemini:", error);
-    if (error instanceof Error && error.message.includes('API key not valid')) {
-        return invalidKeyForecast;
-    }
-    return "Could not retrieve analysis at this time. Please try again later.";
+    return genericErrorForecast;
   }
 };

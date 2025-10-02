@@ -212,15 +212,26 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
   const handleInput = useCallback((value: string) => {
     setError(null);
     if (isResultState) {
-        setExpression('');
-        setCurrentInput(value);
-        setIsResultState(false);
+      setExpression('');
+      setCurrentInput(value);
+      setIsResultState(false);
     } else {
-        setCurrentInput(prev => {
-            if (prev === '0' && value !== '.') return value;
-            if (value === '.' && prev.includes('.')) return prev;
-            return prev + value;
-        });
+      setCurrentInput(prev => {
+        if (prev === '0' && value !== '.') {
+          return value;
+        }
+        // Prevent multiple decimals in the last number segment
+        const parts = prev.split(/([+\-−×÷(])/);
+        const lastPart = parts[parts.length - 1];
+        if (value === '.' && lastPart.includes('.')) {
+          return prev;
+        }
+        // Prevent multiple E's in the last number segment
+        if (value.toUpperCase() === 'E' && lastPart.toUpperCase().includes('E')) {
+            return prev;
+        }
+        return prev + value;
+      });
     }
     if (isSecond) setIsSecond(false);
   }, [isResultState, isSecond]);
@@ -424,7 +435,7 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
       ],
       [
           { label: '%', action: () => handleInput('%'), className: styles.func, title: 'Percentage' },
-          { label: 'EE', action: () => handleInput('e+'), className: styles.func, title: 'Exponent (Scientific Notation)' },
+          { label: 'EE', action: () => handleInput('E'), className: styles.func, title: 'Exponent (e.g. 1.23E4)' },
           { label: '=', action: calculate, className: styles.op, colSpan: 3, title: 'Equals (Enter)' },
       ]
   ];

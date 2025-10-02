@@ -66,100 +66,38 @@ QuantumCalc is more than one calculator—it's a massive collection of specializ
 
 ---
 
-## Getting Started
+## Running the Application (Local & Deployment)
 
-Welcome! To get QuantumCalc running on your local machine, you'll need to serve the files using a local web server. **You cannot simply open the `index.html` file directly in your browser.**
+This project is a static web application. It uses modern browser features but requires a local server for development due to security policies (CORS). **You cannot open the `index.html` file directly from your filesystem.**
 
-Here's a quick guide for developers, followed by a more detailed step-by-step walkthrough.
+### Local Development
 
-### Quick Start (For Developers)
+1.  **Get the Code**: Clone or download the repository to your local machine.
+2.  **Run a Server**: From the project's root directory, start a local web server. Here are some easy options:
+    -   **Using `npx serve` (Easiest)**: If you have Node.js, run `npx serve` in your terminal and open the provided `localhost` URL.
+    -   **VS Code Live Server**: Use the "Live Server" extension in VS Code. Right-click `index.html` and select "Open with Live Server".
+    -   **Python Server**: Run `python -m http.server` (for Python 3) and navigate to `http://localhost:8000`.
 
-```bash
-# 1. Clone the repo
-git clone https://github.com/your-repo/quantum-calc.git
-cd quantum-calc
+### Deployment
 
-# 2. Start a local server (requires Node.js)
-npx serve
+To deploy QuantumCalc, simply upload all the project files to any static web hosting service (like Vercel, Netlify, GitHub Pages, etc.). No build step is necessary.
 
-# 3. Open the app in your browser (usually http://localhost:3000)
-# 4. Navigate to More > Settings and add your Google Gemini API key.
-```
-
----
-
-### Step-by-Step Guide
-
-#### Step 1: Get the Code
-
-First, you need to get the project files onto your computer.
-
-**Option A: Using Git (Recommended)**
-If you have Git installed, open your terminal and run this command:
-```bash
-git clone https://github.com/your-repo/quantum-calc.git
-cd quantum-calc
-```
-*(Note: Replace the URL with the actual repository URL if you have it.)*
-
-**Option B: Download ZIP**
-If you don't use Git, you can download the project as a ZIP file from the repository's main page. Unzip the file to a location of your choice.
-
-#### Step 2: Run a Local Web Server
-
-Modern web applications need to be run from a web server for security and functionality reasons. Here are three easy ways to do this from your project folder:
-
-**Option 1: Using `npx serve` (Easiest Method)**
-This is the simplest way if you have [Node.js](https://nodejs.org/) installed.
-1. Open your terminal in the project's root directory (`quantum-calc`).
-2. Run the command:
-   ```bash
-   npx serve
-   ```
-3. Your terminal will show a local address, usually `http://localhost:3000`. Open this URL in your web browser.
-
-**Option 2: Using VS Code's "Live Server" Extension**
-If you use Visual Studio Code:
-1. Install the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension from the VS Code Marketplace.
-2. Open the `quantum-calc` folder in VS Code.
-3. Right-click the `index.html` file in the file explorer and choose "Open with Live Server".
-4. A browser window will automatically open with the application running.
-
-**Option 3: Using Python's Built-in Server**
-If you have Python installed, you can use its simple web server.
-1. Open your terminal in the project's root directory.
-2. Run one of these commands, depending on your Python version:
-   ```bash
-   # For Python 3
-   python -m http.server
-
-   # For Python 2
-   python -m SimpleHTTPServer
-   ```
-3. Open your browser and go to `http://localhost:8000`.
-
-#### Step 3: Set Up Your Gemini API Key
-
-The AI-powered features in QuantumCalc, like the Formula Explorer, require a Google Gemini API key.
-
-1.  **Get your key:** Visit [Google AI Studio](https://ai.google.dev/) to get your free API key.
-2.  **Run the application:** Make sure QuantumCalc is running in your browser using one of the methods from Step 2.
-3.  **Enter the key in settings:**
-    - In the app, navigate to **More > Settings**.
-    - Paste your API key into the input field.
-    - Click **Save**.
-
-Your key is stored securely in your browser's local storage and is never sent to our servers.
-
-*(For developers: The application can also read from a `process.env.API_KEY` environment variable, which is useful for hosted deployments. However, for local use, the in-app setting is the recommended method.)*
+-   **Build Command:** Set to empty.
+-   **Output Directory:** Set to the root directory.
 
 ---
 
-## Deployment
+## Configuring AI Features (Gemini API Key)
 
-This project uses Vite for its build process. When you run `npm run build`, Vite will generate the production-ready files in a directory named `dist`.
+The AI-powered features in QuantumCalc (like the Formula Explorer) require a Google Gemini API key.
 
-If you are deploying this application to a hosting service like Vercel, Netlify, or GitHub Pages, you may need to configure the **Output Directory** in your project's build settings. Make sure to set it to `dist` to match Vite's output. If you don't, you might see an error that the build output (e.g., a `build` folder) could not be found.
+1.  **Get a Key**: Obtain a free API key from [Google AI Studio](https://ai.google.dev/).
+2.  **Add Key to App**:
+    -   Open QuantumCalc in your browser.
+    -   Navigate to **More -> Settings**.
+    -   Paste your API key into the input field and click **"Save Key"**.
+
+Your key is stored securely and privately in your browser's local storage. It is never transmitted to any server other than Google's API. If no key is provided, the calculator will function normally, but all AI features will be disabled.
 
 ---
 

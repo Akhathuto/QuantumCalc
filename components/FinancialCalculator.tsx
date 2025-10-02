@@ -1,6 +1,5 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
-// FIX: Import Briefcase icon.
 import { Landmark, PiggyBank, HandCoins, Car, Home, Percent, TrendingUp, Receipt, FileText, Bot, Banknote, Loader, Wind, Calculator, Table, Info, Briefcase } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Area, PieChart, Pie, Cell } from 'recharts';
 import CustomDropdown from './common/CustomDropdown';

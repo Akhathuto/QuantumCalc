@@ -208,24 +208,26 @@ const FunctionPlotter: React.FC = () => {
                     </CollapsibleSection>
                 </div>
                 <div className="lg:col-span-2">
-                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
-                    <div className="h-96 w-full" ref={chartRef}>
-                        <ResponsiveContainer>
-                            <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
-                                <defs>
-                                    <linearGradient id="functionGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={lineColor} stopOpacity={0.8}/>
-                                        <stop offset="95%" stopColor={lineColor} stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                                <XAxis type="number" dataKey="x" domain={['dataMin', 'dataMax']} stroke="var(--color-text-secondary)" label={{ value: xLabel, position: 'insideBottom', offset: -15 }}/>
-                                <YAxis stroke="var(--color-text-secondary)" label={{ value: yLabel, angle: -90, position: 'insideLeft' }}/>
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                                <Legend />
-                                <Area type="monotone" dataKey="y" stroke={lineColor} strokeWidth={2} fillOpacity={1} fill={enable3d ? "url(#functionGradient)" : "transparent"} name={`y = ${expression}`} />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <div ref={chartRef}>
+                        <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                        <div className="h-96 w-full">
+                            <ResponsiveContainer>
+                                <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
+                                    <defs>
+                                        <linearGradient id="functionGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={lineColor} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={lineColor} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                    <XAxis type="number" dataKey="x" domain={['dataMin', 'dataMax']} stroke="var(--color-text-secondary)" label={{ value: xLabel, position: 'insideBottom', offset: -15 }}/>
+                                    <YAxis stroke="var(--color-text-secondary)" label={{ value: yLabel, angle: -90, position: 'insideLeft' }}/>
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="y" stroke={lineColor} strokeWidth={2} fillOpacity={1} fill={enable3d ? "url(#functionGradient)" : "transparent"} name={`y = ${expression}`} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                     <ExportButton onClick={handleExport} />
                 </div>
@@ -275,17 +277,19 @@ const ScatterPlotter: React.FC = () => {
                      </CollapsibleSection>
                 </div>
                 <div className="lg:col-span-2">
-                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
-                    <div className="h-96 w-full" ref={chartRef}>
-                        <ResponsiveContainer>
-                            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                                <CartesianGrid stroke="var(--color-border)" />
-                                <XAxis type="number" dataKey="x" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
-                                <YAxis type="number" dataKey="y" name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
-                                <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                                <Scatter name="Data Points" data={data} fill={pointColor} />
-                            </ScatterChart>
-                        </ResponsiveContainer>
+                    <div ref={chartRef}>
+                        <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                        <div className="h-96 w-full">
+                            <ResponsiveContainer>
+                                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                    <CartesianGrid stroke="var(--color-border)" />
+                                    <XAxis type="number" dataKey="x" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
+                                    <YAxis type="number" dataKey="y" name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
+                                    <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                    <Scatter name="Data Points" data={data} fill={pointColor} />
+                                </ScatterChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                     <ExportButton onClick={handleExport} />
                 </div>
@@ -339,24 +343,26 @@ const BarChartCreator: React.FC = () => {
                     </CollapsibleSection>
                 </div>
                 <div className="lg:col-span-2">
-                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
-                    <div className="h-96 w-full" ref={chartRef}>
-                        <ResponsiveContainer>
-                            <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                                <defs>
-                                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={barColor} stopOpacity={0.9}/>
-                                        <stop offset="95%" stopColor={darkenColor(barColor, 20)} stopOpacity={1}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid stroke="var(--color-border)" />
-                                <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
-                                <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                                <Legend />
-                                <Bar dataKey="value" fill={enable3d ? "url(#barGradient)" : barColor} name={yLabel} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div ref={chartRef}>
+                        <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                        <div className="h-96 w-full">
+                            <ResponsiveContainer>
+                                <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                    <defs>
+                                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={barColor} stopOpacity={0.9}/>
+                                            <stop offset="95%" stopColor={darkenColor(barColor, 20)} stopOpacity={1}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid stroke="var(--color-border)" />
+                                    <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
+                                    <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                    <Legend />
+                                    <Bar dataKey="value" fill={enable3d ? "url(#barGradient)" : barColor} name={yLabel} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                     <ExportButton onClick={handleExport} />
                 </div>
@@ -427,24 +433,26 @@ const HistogramCreator: React.FC = () => {
                      </CollapsibleSection>
                  </div>
                  <div className="lg:col-span-2">
-                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
-                    <div className="h-96 w-full" ref={chartRef}>
-                        <ResponsiveContainer>
-                            <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }} barCategoryGap="0%">
-                                <defs>
-                                    <linearGradient id="histGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={barColor} stopOpacity={0.9}/>
-                                        <stop offset="95%" stopColor={darkenColor(barColor, 20)} stopOpacity={1}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid stroke="var(--color-border)" />
-                                <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" tick={{fontSize: 10}} />
-                                <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" allowDecimals={false} />
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                                <Legend />
-                                <Bar dataKey="count" fill={enable3d ? "url(#histGradient)" : barColor} name={yLabel} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div ref={chartRef}>
+                        <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                        <div className="h-96 w-full">
+                            <ResponsiveContainer>
+                                <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }} barCategoryGap="0%">
+                                    <defs>
+                                        <linearGradient id="histGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={barColor} stopOpacity={0.9}/>
+                                            <stop offset="95%" stopColor={darkenColor(barColor, 20)} stopOpacity={1}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid stroke="var(--color-border)" />
+                                    <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" tick={{fontSize: 10}} />
+                                    <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" allowDecimals={false} />
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                    <Legend />
+                                    <Bar dataKey="count" fill={enable3d ? "url(#histGradient)" : barColor} name={yLabel} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                     <ExportButton onClick={handleExport} />
                  </div>
@@ -490,19 +498,21 @@ const PieChartCreator: React.FC = () => {
                      </CollapsibleSection>
                 </div>
                 <div className="lg:col-span-2">
-                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
-                    <div className={`h-96 w-full transition-transform ${enable3d ? '[filter:drop-shadow(0_10px_8px_rgba(0,0,0,0.3))]' : ''}`} ref={chartRef}>
-                        <ResponsiveContainer>
-                            <PieChart>
-                                <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
-                                    {data.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
+                    <div className={`transition-transform ${enable3d ? '[filter:drop-shadow(0_10px_8px_rgba(0,0,0,0.3))]' : ''}`} ref={chartRef}>
+                        <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                        <div className="h-96 w-full">
+                            <ResponsiveContainer>
+                                <PieChart>
+                                    <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
+                                        {data.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                     <ExportButton onClick={handleExport} />
                 </div>

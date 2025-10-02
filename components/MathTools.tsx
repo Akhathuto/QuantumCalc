@@ -6,9 +6,7 @@ import Button from './common/Button';
 import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend } from 'recharts';
 
 
-const math = create(all, {
-  number: 'Fraction' // Configure math.js to work with Fractions
-});
+const math = create(all);
 math.config({ number: 'BigNumber', precision: 64 }); // Use BigNumber for precision in some calcs
 
 // --- Reusable UI ---
@@ -794,7 +792,6 @@ const FactoringCalculator = () => {
         const num = parseInt(number);
         if (isNaN(num) || num < 2) return 'Enter an integer > 1';
         try {
-            // FIX: Use the standard `math.factor` function which returns a Map of prime factors to their exponents.
             const factors = math.factor(num);
             
             return Array.from(factors.entries())
