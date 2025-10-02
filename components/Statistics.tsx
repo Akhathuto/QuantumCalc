@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { create, all } from 'mathjs';
 import Button from './common/Button';
 
 const math = create(all);
 
-const Statistics: React.FC = () => {
+const Statistics = () => {
     const [dataStr, setDataStr] = useState('1, 5, 2, 8, 7, 9, 12, 4, 5, 8');
     const [error, setError] = useState<string | null>(null);
 

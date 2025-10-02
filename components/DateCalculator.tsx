@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
-const DateCalculator: React.FC = () => {
+const DateCalculator = () => {
     // Duration State
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState(new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]);

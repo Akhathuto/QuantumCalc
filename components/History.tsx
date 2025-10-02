@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import type { MouseEvent } from 'react';
 import { HistoryEntry } from '../types';
 import { Star, Search, Download } from 'lucide-react';
 
@@ -9,7 +10,7 @@ interface HistoryProps {
   toggleFavorite: (timestamp: string) => void;
 }
 
-const History: React.FC<HistoryProps> = ({ history, loadFromHistory, clearHistory, toggleFavorite }) => {
+const History = ({ history, loadFromHistory, clearHistory, toggleFavorite }: HistoryProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredAndSortedHistory = useMemo(() => {
@@ -27,7 +28,7 @@ const History: React.FC<HistoryProps> = ({ history, loadFromHistory, clearHistor
     });
   }, [history, searchTerm]);
 
-  const handleFavoriteClick = (e: React.MouseEvent, timestamp: string) => {
+  const handleFavoriteClick = (e: MouseEvent, timestamp: string) => {
     e.stopPropagation(); // Prevent loading the history item when clicking the star
     toggleFavorite(timestamp);
   };

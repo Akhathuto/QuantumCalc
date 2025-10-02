@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { create, all } from 'mathjs';
 import Button from './common/Button';
 
 const math = create(all);
 
-const Matrix: React.FC = () => {
+const Matrix = () => {
     const [size, setSize] = useState(3);
     const [matrixA, setMatrixA] = useState(Array(9).fill(0));
     const [matrixB, setMatrixB] = useState(Array(9).fill(0));
@@ -22,7 +23,7 @@ const Matrix: React.FC = () => {
         }
     }, [size]);
 
-    const handleCellChange = (matrixSetter: React.Dispatch<React.SetStateAction<number[]>>, index: number, value: string) => {
+    const handleCellChange = (matrixSetter: Dispatch<SetStateAction<number[]>>, index: number, value: string) => {
         matrixSetter(prev => {
             const newMatrix = [...prev];
             newMatrix[index] = value === '' ? 0 : parseFloat(value);
@@ -66,7 +67,7 @@ const Matrix: React.FC = () => {
     ];
 
 
-    const renderMatrixInput = (matrix: number[], setter: React.Dispatch<React.SetStateAction<number[]>>) => (
+    const renderMatrixInput = (matrix: number[], setter: Dispatch<SetStateAction<number[]>>) => (
         <div className={`grid gap-2`} style={{gridTemplateColumns: `repeat(${size}, 1fr)`}}>
             {Array.from({ length: size * size }).map((_, i) => (
                 <input

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import Header from './components/common/Header';
 import Calculator from './components/Calculator';
 import History from './components/History';
@@ -20,7 +20,7 @@ const CurrencyConverter = lazy(() => import('./components/CurrencyConverter'));
 const FinancialCalculator = lazy(() => import('./components/FinancialCalculator'));
 const HealthCalculator = lazy(() => import('./components/HealthCalculator'));
 
-const App: React.FC = () => {
+const App = () => {
   const [activeTab, setActiveTab] = useState<AppTab>('calculator');
   const [history, setHistory] = useState<HistoryEntry[]>(() => {
     try {

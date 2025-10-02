@@ -1,6 +1,7 @@
 
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import type { InputHTMLAttributes, FC } from 'react';
 import { Landmark, PiggyBank, HandCoins, Car, Home, Percent, TrendingUp, Receipt, FileText, Bot, Banknote, Loader, Wind, Calculator, Table, Info, Briefcase } from 'lucide-react';
 import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line, PieChart, Pie, Cell } from 'recharts';
 import CustomDropdown from './common/CustomDropdown';
@@ -8,7 +9,7 @@ import { getAutoLoanAnalysis, AutoLoanDetails } from '../services/geminiService'
 
 
 // --- Reusable UI ---
-const InputField: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string, id: string, currencySymbol?: string, rightAddon?: string }> = ({ label, id, currencySymbol, rightAddon, ...props }) => (
+const InputField: FC<InputHTMLAttributes<HTMLInputElement> & { label: string, id: string, currencySymbol?: string, rightAddon?: string }> = ({ label, id, currencySymbol, rightAddon, ...props }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
         <div className="relative">
@@ -19,7 +20,7 @@ const InputField: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label
     </div>
 );
 
-const ResultCard: React.FC<{ title: string; value: string; description?: string }> = ({ title, value, description }) => (
+const ResultCard: FC<{ title: string; value: string; description?: string }> = ({ title, value, description }) => (
     <div className="bg-brand-bg p-4 rounded-lg text-center flex-1">
         <p className="text-sm text-brand-text-secondary">{title}</p>
         <p className="text-3xl font-bold text-brand-accent my-1 break-all">{value}</p>
@@ -120,7 +121,7 @@ const CustomPieTooltip = ({ active, payload, currency }: any) => {
 
 // --- Individual Calculators ---
 
-const LoanCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const LoanCalculator = ({ currency }: CalculatorProps) => {
     const [amount, setAmount] = useState('25000');
     const [rate, setRate] = useState('6.5');
     const [term, setTerm] = useState('5');
@@ -219,7 +220,7 @@ const LoanCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     );
 };
 
-const InvestmentCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const InvestmentCalculator = ({ currency }: CalculatorProps) => {
     const [principal, setPrincipal] = useState('1000');
     const [contribution, setContribution] = useState('100');
     const [rate, setRate] = useState('7');
@@ -322,7 +323,7 @@ const InvestmentCalculator: React.FC<CalculatorProps> = ({ currency }) => {
 };
 
 
-const InterestRateCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const InterestRateCalculator = ({ currency }: CalculatorProps) => {
     const [loanAmount, setLoanAmount] = useState('20000');
     const [monthlyPayment, setMonthlyPayment] = useState('400');
     const [termYears, setTermYears] = useState('5');
@@ -402,7 +403,7 @@ const InterestRateCalculator: React.FC<CalculatorProps> = ({ currency }) => {
 };
 
 
-const MortgageCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const MortgageCalculator = ({ currency }: CalculatorProps) => {
     const [homePrice, setHomePrice] = useState('350000');
     const [downPayment, setDownPayment] = useState('70000');
     const [loanTerm, setLoanTerm] = useState('30');
@@ -580,7 +581,7 @@ const MortgageCalculator: React.FC<CalculatorProps> = ({ currency }) => {
 };
 
 
-const AutoLoanCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const AutoLoanCalculator = ({ currency }: CalculatorProps) => {
     const [vehiclePrice, setVehiclePrice] = useState('30000');
     const [downPayment, setDownPayment] = useState('5000');
     const [tradeInValue, setTradeInValue] = useState('2000');
@@ -771,7 +772,7 @@ const AutoLoanCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     );
 };
 
-const InterestCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const InterestCalculator = ({ currency }: CalculatorProps) => {
     const [principal, setPrincipal] = useState('1000');
     const [rate, setRate] = useState('5');
     const [time, setTime] = useState('2');
@@ -868,7 +869,7 @@ const InterestCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     );
 };
 
-const PaymentCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const PaymentCalculator = ({ currency }: CalculatorProps) => {
     const [loanAmount, setLoanAmount] = useState('150000');
     const [rate, setRate] = useState('7');
     const [term, setTerm] = useState('30');
@@ -959,7 +960,7 @@ const PaymentCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     );
 };
 
-const RetirementCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const RetirementCalculator = ({ currency }: CalculatorProps) => {
     const [currentAge, setCurrentAge] = useState('30');
     const [retirementAge, setRetirementAge] = useState('65');
     const [currentSavings, setCurrentSavings] = useState('25000');
@@ -1050,7 +1051,7 @@ const RetirementCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     );
 };
 
-const AmortizationCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const AmortizationCalculator = ({ currency }: CalculatorProps) => {
     const [loanAmount, setLoanAmount] = useState('200000');
     const [rate, setRate] = useState('6.5');
     const [term, setTerm] = useState('30');
@@ -1134,7 +1135,7 @@ const AmortizationCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     );
 };
 
-const InflationCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const InflationCalculator = ({ currency }: CalculatorProps) => {
     const [mode, setMode] = useState<'future' | 'past'>('future');
     const [amount, setAmount] = useState('1000');
     const [years, setYears] = useState('10');
@@ -1186,14 +1187,14 @@ const InflationCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     );
 };
 
-const FinanceCalculator: React.FC<CalculatorProps> = ({ currency }) => (
+const FinanceCalculator: FC<CalculatorProps> = ({ currency }) => (
     <div className="text-center text-brand-text-secondary p-8 bg-brand-bg rounded-lg">
         <Calculator size={48} className="mx-auto mb-4 text-brand-primary" />
         <p>A full Time Value of Money (TVM) solver is coming soon to handle complex financial calculations for N, I/Y, PV, PMT, and FV.</p>
     </div>
 );
 
-const IncomeTaxCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const IncomeTaxCalculator: FC<CalculatorProps> = ({ currency }) => {
     const TAX_BRACKETS_2024 = {
       single: [
         { rate: 0.10, from: 0, to: 11600 },
@@ -1301,14 +1302,14 @@ const IncomeTaxCalculator: React.FC<CalculatorProps> = ({ currency }) => {
     );
 };
 
-const SalaryCalculator: React.FC<CalculatorProps> = ({ currency }) => (
+const SalaryCalculator: FC<CalculatorProps> = ({ currency }) => (
     <div className="text-center text-brand-text-secondary p-8 bg-brand-bg rounded-lg">
         <Banknote size={48} className="mx-auto mb-4 text-brand-primary" />
         <p>A salary calculator is coming soon to estimate your take-home pay after taxes and deductions.</p>
     </div>
 );
 
-const SalesTaxCalculator: React.FC<CalculatorProps> = ({ currency }) => {
+const SalesTaxCalculator: FC<CalculatorProps> = ({ currency }) => {
     const [preTax, setPreTax] = useState('100');
     const [rate1, setRate1] = useState('8.5');
 
@@ -1358,7 +1359,7 @@ const SalesTaxCalculator: React.FC<CalculatorProps> = ({ currency }) => {
 };
 
 // --- Main Component ---
-const FinancialCalculator: React.FC = () => {
+const FinancialCalculator = () => {
     const [activeCalc, setActiveCalc] = useState('mortgage');
     const [currency, setCurrency] = useState('USD');
 
@@ -1382,7 +1383,7 @@ const FinancialCalculator: React.FC = () => {
     const currencyList = ['USD', 'EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'CHF', 'CNY', 'INR', 'ZAR'];
 
     const ActiveCalculator = useMemo(() => {
-        const calculators: Record<string, React.FC<CalculatorProps>> = {
+        const calculators: Record<string, FC<CalculatorProps>> = {
             'mortgage': MortgageCalculator,
             'loan': LoanCalculator,
             'auto-loan': AutoLoanCalculator,

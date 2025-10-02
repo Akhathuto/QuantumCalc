@@ -1,23 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
-import { Save, Moon, Sun, KeyRound } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 
 const Settings: React.FC = () => {
-    const [apiKey, setApiKey] = useState('');
     const [toastMessage, setToastMessage] = useState('');
     const [isDarkMode, setIsDarkMode] = useState(true);
-
-    // Effect for API Key
-    useEffect(() => {
-        try {
-            const savedKey = localStorage.getItem('geminiApiKey');
-            if (savedKey) {
-                setApiKey(savedKey);
-            }
-        } catch (error) {
-            console.error("Could not read API key from localStorage", error);
-        }
-    }, []);
 
     // Effect for Theme
     useEffect(() => {
@@ -38,20 +24,6 @@ const Settings: React.FC = () => {
     const showToast = (message: string) => {
         setToastMessage(message);
         setTimeout(() => setToastMessage(''), 3000);
-    };
-
-    const handleSaveSettings = () => {
-        try {
-            if (apiKey) {
-                localStorage.setItem('geminiApiKey', apiKey);
-            } else {
-                localStorage.removeItem('geminiApiKey');
-            }
-            showToast("Settings saved successfully!");
-        } catch (error) {
-            console.error("Failed to save settings to localStorage:", error);
-            showToast("Error: Could not save settings.");
-        }
     };
 
     const handleThemeToggle = () => {
@@ -77,30 +49,6 @@ const Settings: React.FC = () => {
             <h2 className="text-3xl font-bold mb-6 text-brand-primary">Settings</h2>
             
              <div className="bg-brand-surface/50 p-6 rounded-lg max-w-2xl mx-auto space-y-8">
-                <div>
-                    <h3 className="text-xl font-bold mb-4 text-brand-accent flex items-center gap-2">
-                        <KeyRound /> Gemini API Key
-                    </h3>
-                    <p className="text-brand-text-secondary text-sm mb-3">
-                        To use AI features like the Formula Explorer, enter your Google Gemini API key. Your key is stored only in your browser.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <input
-                            type="password"
-                            value={apiKey}
-                            onChange={(e) => setApiKey(e.target.value)}
-                            placeholder="Enter your Gemini API Key"
-                            className="flex-grow w-full bg-brand-bg border border-brand-border rounded-md p-2 font-mono"
-                        />
-                        <button
-                            onClick={handleSaveSettings}
-                            className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary hover:bg-blue-500 text-white rounded-md font-semibold transition-colors"
-                        >
-                            <Save size={18} /> Save Key
-                        </button>
-                    </div>
-                </div>
-
                 <div>
                     <h3 className="text-xl font-bold mb-4 text-brand-accent flex items-center gap-2">
                         <Sun /> Appearance

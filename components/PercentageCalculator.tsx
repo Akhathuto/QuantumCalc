@@ -1,14 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import type { ReactNode, FC } from 'react';
 
 // Define props for the helper component
 interface CalculationCardProps {
-    title: React.ReactNode;
+    title: ReactNode;
     result: string;
     resultLabel: string;
 }
 
 // Define the helper component outside the main component for stability and performance.
-const CalculationCard: React.FC<CalculationCardProps> = ({ title, result, resultLabel }) => (
+const CalculationCard: FC<CalculationCardProps> = ({ title, result, resultLabel }) => (
     <div className="bg-brand-surface/50 p-6 rounded-lg flex flex-col">
         <h3 className="text-xl font-semibold mb-4 text-brand-text h-16 flex items-center">{title}</h3>
         <div className="mt-auto pt-4 border-t border-gray-700">
@@ -19,7 +20,7 @@ const CalculationCard: React.FC<CalculationCardProps> = ({ title, result, result
 );
 
 
-const PercentageCalculator: React.FC = () => {
+const PercentageCalculator = () => {
     const [val1, setVal1] = useState('15');
     const [val2, setVal2] = useState('75');
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { create, all } from 'mathjs';
 import Button from './common/Button';
 import { Brain } from 'lucide-react';
@@ -12,7 +12,7 @@ interface SolvedDetails {
 }
 
 // Helper component for displaying the formula explanation
-const FormulaExplainer: React.FC<{ details: SolvedDetails }> = ({ details }) => {
+const FormulaExplainer = ({ details }: { details: SolvedDetails }) => {
     const { type, coeffs, discriminant } = details;
     const { a, b, c } = coeffs;
 
@@ -64,7 +64,7 @@ const FormulaExplainer: React.FC<{ details: SolvedDetails }> = ({ details }) => 
 };
 
 
-const EquationSolver: React.FC = () => {
+const EquationSolver = () => {
     const [equation, setEquation] = useState('x^2 - 4x + 3 = 0');
     const [solutions, setSolutions] = useState<any[]>([]);
     const [error, setError] = useState<string | null>(null);

@@ -1,13 +1,13 @@
-import React from 'react';
+import type { ElementType } from 'react';
 
 interface TabProps {
   label: string;
-  Icon: React.ElementType;
+  Icon: ElementType;
   isActive: boolean;
   onClick: () => void;
 }
 
-const Tab: React.FC<TabProps> = ({ label, Icon, isActive, onClick }) => {
+const Tab = ({ label, Icon, isActive, onClick }: TabProps) => {
   const activeClasses = 'bg-brand-surface text-brand-text';
   const inactiveClasses = 'text-brand-text-secondary hover:bg-brand-surface/70 hover:text-brand-text';
 

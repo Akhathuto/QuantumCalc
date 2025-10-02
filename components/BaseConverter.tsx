@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { AlertTriangle } from 'lucide-react';
 
 type Base = 'bin' | 'oct' | 'dec' | 'hex';
@@ -10,7 +10,7 @@ const baseDetails = {
   hex: { name: 'Hexadecimal', base: 16, pattern: /^[0-9a-fA-F]*$/ },
 };
 
-const BaseConverter: React.FC = () => {
+const BaseConverter = () => {
     const [values, setValues] = useState({ bin: '1010', oct: '12', dec: '10', hex: 'a' });
     const [error, setError] = useState<string | null>(null);
 

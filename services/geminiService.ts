@@ -1,27 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Explanation } from '../types';
 
-const getAiClient = (): GoogleGenAI | null => {
-  let apiKey: string | null = null;
-  try {
-    apiKey = localStorage.getItem('geminiApiKey');
-  } catch (error) {
-    console.error("Could not access localStorage for API key:", error);
-    return null;
-  }
-  
-  if (!apiKey) {
-    return null;
-  }
-  return new GoogleGenAI({ apiKey });
-};
-
-const missingKeyExplanation: Explanation = {
-    functionName: "AI Feature Unavailable",
-    formula: "N/A",
-    description: "To enable AI-powered features, please add your Google Gemini API key in the Settings page (under the 'More' tab).",
-    example: "You can get a free API key from Google AI Studio."
-};
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const genericErrorExplanation: Explanation = {
     functionName: "Error",
@@ -30,16 +10,10 @@ const genericErrorExplanation: Explanation = {
     example: "Please try again later."
 };
 
-const missingKeyForecast: string = "AI-powered features are currently unavailable. Please add your Gemini API key in Settings.";
 const genericErrorForecast: string = "Could not retrieve analysis at this time. Please try again later.";
 
 
 export const getFormulaExplanation = async (expression: string): Promise<Explanation | null> => {
-  const ai = getAiClient();
-  if (!ai) {
-    return missingKeyExplanation;
-  }
-
   try {
     const prompt = `
       Analyze the primary mathematical, statistical, or financial function in this expression: "${expression}".
@@ -107,11 +81,6 @@ export const getFormulaExplanation = async (expression: string): Promise<Explana
 };
 
 export const getCurrencyForecast = async (from: string, to: string): Promise<string> => {
-  const ai = getAiClient();
-  if (!ai) {
-    return missingKeyForecast;
-  }
-
   try {
     const prompt = `
       Provide a brief, general, and educational analysis of the typical factors influencing the exchange rate between ${from} and ${to}.
@@ -126,7 +95,7 @@ export const getCurrencyForecast = async (from: string, to: string): Promise<str
         contents: prompt,
     });
     
-    return response.text.trim();
+    return response.text;
 
   } catch (error) {
     console.error("Error fetching currency forecast from Gemini:", error);
@@ -143,11 +112,6 @@ export interface AutoLoanDetails {
 }
 
 export const getAutoLoanAnalysis = async (details: AutoLoanDetails): Promise<string> => {
-  const ai = getAiClient();
-  if (!ai) {
-    return missingKeyForecast;
-  }
-
   try {
     const { loanAmount, interestRate, termYears, vehiclePrice, downPayment } = details;
     const prompt = `
@@ -173,7 +137,7 @@ export const getAutoLoanAnalysis = async (details: AutoLoanDetails): Promise<str
         contents: prompt,
     });
     
-    return response.text.trim();
+    return response.text;
 
   } catch (error) {
     console.error("Error fetching auto loan analysis from Gemini:", error);

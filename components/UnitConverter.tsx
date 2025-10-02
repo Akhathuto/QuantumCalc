@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
 
 const CONVERSION_DATA = {
@@ -57,7 +57,7 @@ const CONVERSION_DATA = {
 
 type Category = keyof typeof CONVERSION_DATA;
 
-export const UnitConverter: React.FC = () => {
+export const UnitConverter = () => {
   const [category, setCategory] = useState<Category>('Length');
   const [fromUnit, setFromUnit] = useState<string>('Meter');
   const [toUnit, setToUnit] = useState<string>('Foot');

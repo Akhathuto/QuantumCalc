@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import type { ReactNode } from 'react';
 import { HistoryEntry, Explanation } from '../types';
 import { getFormulaExplanation } from '../services/geminiService';
 import Button from './common/Button';
@@ -45,10 +46,10 @@ const SCIENTIFIC_CONSTANTS = [
     { name: 'Golden Ratio (φ)', value: '1.61803398875', symbol: 'φ', unit: '' },
 ];
 
-const LatexRenderer: React.FC<{ latex: string }> = React.memo(({ latex }) => {
+const LatexRenderer = memo(({ latex }: { latex: string }) => {
   // A basic recursive parser for a subset of LaTeX to handle nested structures.
-  const parseLatex = (str: string, keyPrefix: string = 'l'): React.ReactNode[] => {
-    const result: React.ReactNode[] = [];
+  const parseLatex = (str: string, keyPrefix: string = 'l'): ReactNode[] => {
+    const result: ReactNode[] = [];
     let i = 0;
     let key = 0;
 
@@ -141,7 +142,7 @@ const LatexRenderer: React.FC<{ latex: string }> = React.memo(({ latex }) => {
 });
 
 
-const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad, onExpressionLoaded }) => {
+const Calculator = ({ addToHistory, expressionToLoad, onExpressionLoaded }: CalculatorProps) => {
   const [expression, setExpression] = useState(''); // The top, ongoing expression line
   const [currentInput, setCurrentInput] = useState('0'); // The bottom, current input line
   const [isResultState, setIsResultState] = useState(false); // Are we showing a final result?
@@ -327,6 +328,66 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     }
   }, [expression, currentInput, error, isLoading, addToHistory, parser]);
 
+  const handleOp = (op: string) => {
+    setError(null);
+    if (currentInput === '' && expression.length > 0) {
+        // Use regex to robustly replace the last operator
+        setExpression(prev => prev.trim().replace(/[+\-−×÷]$/, '').trim() + ` ${op} `);
+        return;
+    }
+    if (isResultState) {
+      setExpression(currentInput + ` ${op} `);
+      setCurrentInput('');
+      setIsResultState(false);
+    } else {
+      setExpression(prev => (prev + currentInput + ` ${op} `));
+      setCurrentInput('');
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        // Prevent handling events if an input field is focused (e.g. in another tab)
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+            return;
+        }
+
+        event.preventDefault();
+        const key = event.key;
+
+        if (key >= '0' && key <= '9') {
+            handleInput(key);
+        } else if (key === '.') {
+            handleInput('.');
+        } else if (key === '+') {
+            handleOp('+');
+        } else if (key === '-') {
+            handleOp('−');
+        } else if (key === '*') {
+            handleOp('×');
+        } else if (key === '/') {
+            handleOp('÷');
+        } else if (key === '(') {
+            handleInput('(');
+        } else if (key === ')') {
+            handleInput(')');
+        } else if (key === 'Enter' || key === '=') {
+            calculate();
+        } else if (key === 'Backspace') {
+            backspace();
+        } else if (key === 'Escape') {
+            clear();
+        } else if (key.toLowerCase() === 'e') {
+            handleInput('E');
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleInput, handleOp, calculate, backspace, clear]);
+
   const memoryClear = () => { setMemory(null); showToast("Memory cleared"); };
   const memoryRecall = () => { if(memory !== null) { setCurrentInput(String(memory)); setIsResultState(false); } };
   const memoryStore = () => {
@@ -351,23 +412,6 @@ const Calculator: React.FC<CalculatorProps> = ({ addToHistory, expressionToLoad,
     }
   };
   
-  const handleOp = (op: string) => {
-    setError(null);
-    if (currentInput === '' && expression.length > 0) {
-        // change the last operator
-        setExpression(prev => prev.trim().slice(0, -1) + op + ' ');
-        return;
-    }
-    if (isResultState) {
-      setExpression(currentInput + ` ${op} `);
-      setCurrentInput('');
-      setIsResultState(false);
-    } else {
-      setExpression(prev => (prev + currentInput + ` ${op} `));
-      setCurrentInput('');
-    }
-  };
-
   const styles = {
     op: 'bg-brand-secondary hover:bg-orange-500 text-white',
     mem: 'bg-teal-600 hover:bg-teal-500 text-white',

@@ -57,19 +57,13 @@ const Help: React.FC = () => {
             </div>
             <div className="bg-brand-surface/50 rounded-lg max-w-4xl mx-auto">
                 <AccordionItem title="Frequently Asked Questions" icon={HelpCircle} startOpen={true}>
-                    <h4>How do I use the AI features like Formula Explorer?</h4>
+                    <h4>How do the AI features like Formula Explorer work?</h4>
                     <p>
-                        The AI features are powered by Google's Gemini API. To enable them, you need a free API key.
-                        <ol>
-                            <li>Visit <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer">Google AI Studio</a> to get your key.</li>
-                            <li>In QuantumCalc, go to <strong>More &gt; Settings</strong>.</li>
-                            <li>Paste your API key into the input field and click <strong>Save Key</strong>.</li>
-                        </ol>
-                        Your key is stored securely in your browser's local storage and is never sent to our servers.
+                        The AI features are powered by Google's Gemini API. They are enabled by default if the application is configured correctly by the administrator. There's no need for you to provide an API key. Simply perform a calculation using a scientific function (like sqrt, sin, log) to see a detailed explanation in the "Formula Explorer" panel on the calculator page.
                     </p>
                     <h4>Is my data private?</h4>
                     <p>
-                        Yes. All your data, including calculation history and your API key, is stored locally in your browser. It is not uploaded to any server, ensuring your privacy.
+                        Yes. All your data, including calculation history, is stored locally in your browser. It is not uploaded to any server, ensuring your privacy.
                     </p>
                     <h4>How do I see my past calculations?</h4>
                     <p>
@@ -91,7 +85,7 @@ const Help: React.FC = () => {
                                 <li><strong>M-:</strong> Memory Subtract - subtracts the current number from memory.</li>
                             </ul>
                         </li>
-                        <li><strong>Formula Explorer:</strong> After performing a calculation with a function (like <code>sqrt(16)</code>), the panel on the right will show an AI-generated explanation of the function, its formula, and an example. <em>(Requires Gemini API key)</em></li>
+                        <li><strong>Formula Explorer:</strong> After performing a calculation with a function (like <code>sqrt(16)</code>), the panel on the right will show an AI-generated explanation of the function, its formula, and an example.</li>
                     </ul>
                 </AccordionItem>
                 <AccordionItem title="Graphing Suite" icon={LineChart}>

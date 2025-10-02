@@ -37,7 +37,7 @@ QuantumCalc is more than one calculator—it's a massive collection of specializ
 ### Core Tools
 - **Scientific Calculator**: Full-featured with a "2nd function" key, memory, constants, and a ticker-tape history.
 - **Graphing Suite**: Multi-mode charting for functions, scatter, bar, and pie charts.
-- **History**: Saves your recent calculations for easy access, with the ability to "favorite" important entries.
+- **History**: Saves your recent calculations for easy access, with the ability to "favorite" important entries and export your data.
 
 ### Mathematical Tools
 - **Matrix Calculator**: Perform matrix operations like addition, multiplication, determinant, inverse, and transpose.
@@ -89,15 +89,11 @@ To deploy QuantumCalc, simply upload all the project files to any static web hos
 
 ## Configuring AI Features (Gemini API Key)
 
-The AI-powered features in QuantumCalc (like the Formula Explorer) require a Google Gemini API key.
+The AI-powered features in QuantumCalc (like the Formula Explorer and Currency Forecast) are powered by the Google Gemini API.
 
-1.  **Get a Key**: Obtain a free API key from [Google AI Studio](https://ai.google.dev/).
-2.  **Add Key to App**:
-    -   Open QuantumCalc in your browser.
-    -   Navigate to **More -> Settings**.
-    -   Paste your API key into the input field and click **"Save Key"**.
+For these features to work, the application administrator must configure a Google Gemini API key as an environment variable (`process.env.API_KEY`) in the deployment environment. The application is designed to securely access this key without any action required from the end-user.
 
-Your key is stored securely and privately in your browser's local storage. It is never transmitted to any server other than Google's API. If no key is provided, the calculator will function normally, but all AI features will be disabled.
+If the AI features are not working, it means the API key has not been configured in the environment where the application is hosted. The rest of the application will continue to function normally.
 
 ---
 

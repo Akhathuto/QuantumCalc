@@ -1,6 +1,5 @@
-
-
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import type { InputHTMLAttributes, TextareaHTMLAttributes, ReactNode, RefObject, FC } from 'react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, ScatterChart, Scatter, BarChart, Bar
@@ -11,7 +10,7 @@ import { AlertTriangle, Download, ChevronDown } from 'lucide-react';
 const math = create(all);
 
 // --- Reusable UI ---
-const SubNavButton: React.FC<{ label: string; isActive: boolean; onClick: () => void }> = ({ label, isActive, onClick }) => (
+const SubNavButton: FC<{ label: string; isActive: boolean; onClick: () => void }> = ({ label, isActive, onClick }) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 rounded-md font-semibold transition-colors text-sm sm:text-base ${isActive ? 'bg-brand-primary text-white' : 'bg-brand-surface hover:bg-brand-border'}`}
@@ -20,21 +19,21 @@ const SubNavButton: React.FC<{ label: string; isActive: boolean; onClick: () => 
     </button>
 );
 
-const Input = ({ label, id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string, id: string }) => (
+const Input = ({ label, id, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: string, id: string }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
         <input id={id} {...props} className="w-full bg-gray-900/70 border-gray-600 rounded-md p-2 focus:ring-brand-primary focus:border-brand-primary" />
     </div>
 );
 
-const TextArea = ({ label, id, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string, id: string }) => (
+const TextArea = ({ label, id, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string, id: string }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-medium text-brand-text-secondary mb-1">{label}</label>
         <textarea id={id} {...props} rows={5} className="w-full bg-gray-900/70 border-gray-600 rounded-md p-2 font-mono focus:ring-brand-primary focus:border-brand-primary" />
     </div>
 );
 
-const ErrorDisplay: React.FC<{ error: string | null }> = ({ error }) => {
+const ErrorDisplay: FC<{ error: string | null }> = ({ error }) => {
     if (!error) return null;
     return (
         <div className="flex items-center gap-2 text-red-400 p-3 bg-red-900/50 rounded-md">
@@ -44,7 +43,7 @@ const ErrorDisplay: React.FC<{ error: string | null }> = ({ error }) => {
     );
 };
 
-const ToggleSwitch: React.FC<{ label: string; checked: boolean; onChange: (checked: boolean) => void }> = ({ label, checked, onChange }) => (
+const ToggleSwitch: FC<{ label: string; checked: boolean; onChange: (checked: boolean) => void }> = ({ label, checked, onChange }) => (
     <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-brand-text-secondary">{label}</label>
         <button
@@ -61,7 +60,7 @@ const ToggleSwitch: React.FC<{ label: string; checked: boolean; onChange: (check
 );
 
 
-const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+const CollapsibleSection: FC<{ title: string; children: ReactNode }> = ({ title, children }) => (
     <details className="border border-brand-border rounded-lg group" open>
         <summary className="p-3 cursor-pointer font-semibold hover:bg-brand-border/30 list-none flex justify-between items-center">
             {title}
@@ -74,7 +73,7 @@ const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode }>
 );
 
 
-const ExportButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+const ExportButton: FC<{ onClick: () => void }> = ({ onClick }) => (
     <button
         onClick={onClick}
         className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-brand-accent/80 hover:bg-brand-accent text-white rounded-md font-semibold transition-colors"
@@ -84,7 +83,7 @@ const ExportButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
 );
 
 // --- Export Logic ---
-const exportToPng = (chartRef: React.RefObject<HTMLDivElement>, fileName: string) => {
+const exportToPng = (chartRef: RefObject<HTMLDivElement>, fileName: string) => {
     if (!chartRef.current) return;
 
     const svg = chartRef.current.querySelector('svg');
@@ -134,7 +133,7 @@ const exportToPng = (chartRef: React.RefObject<HTMLDivElement>, fileName: string
 
 // --- Chart Components ---
 
-const FunctionPlotter: React.FC = () => {
+const FunctionPlotter = () => {
     const [expression, setExpression] = useState('sin(x)');
     const [xMin, setXMin] = useState('-10');
     const [xMax, setXMax] = useState('10');
@@ -220,7 +219,7 @@ const FunctionPlotter: React.FC = () => {
     );
 };
 
-const ScatterPlotter: React.FC = () => {
+const ScatterPlotter = () => {
     const [dataStr, setDataStr] = useState('1, 5\n2, 8\n3, 6\n4, 9\n5, 7');
     const [title, setTitle] = useState('Sample Scatter Plot');
     const [xLabel, setXLabel] = useState('X-Axis');
@@ -282,7 +281,7 @@ const ScatterPlotter: React.FC = () => {
     );
 };
 
-const BarChartCreator: React.FC = () => {
+const BarChartCreator = () => {
     const [dataStr, setDataStr] = useState('Mice, 25\nZebra, 42\nLion, 12\nElephant, 8');
     const [title, setTitle] = useState('Animal Population');
     const [xLabel, setXLabel] = useState('Animal');
@@ -347,7 +346,7 @@ const BarChartCreator: React.FC = () => {
     );
 };
 
-const HistogramCreator: React.FC = () => {
+const HistogramCreator = () => {
     const [dataStr, setDataStr] = useState('1,5,2,8,7,9,12,4,5,8,5,6,10,11');
     const [numBins, setNumBins] = useState('5');
     const [title, setTitle] = useState('Data Distribution');
@@ -429,7 +428,7 @@ const HistogramCreator: React.FC = () => {
     );
 };
 
-const PieChartCreator: React.FC = () => {
+const PieChartCreator = () => {
     const [dataStr, setDataStr] = useState('Marketing, 50\nSales, 120\nDevelopment, 90\nSupport, 75');
     const [title, setTitle] = useState('Department Budget Allocation');
     const [enable3d, setEnable3d] = useState(true);
@@ -490,7 +489,7 @@ const PieChartCreator: React.FC = () => {
 };
 
 // --- Main Graphing Component ---
-const Graph: React.FC = () => {
+const Graph = () => {
     type ChartType = 'function' | 'scatter' | 'bar' | 'histogram' | 'pie';
     const [chartType, setChartType] = useState<ChartType>(() => {
         try {

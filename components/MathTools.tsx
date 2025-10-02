@@ -1,9 +1,13 @@
 
+
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { create, all } from 'mathjs';
+// FIX: Moved ReferenceLine from lucide-react to recharts import.
 import { Brain, BarChart, FunctionSquare, Table, Percent, Sigma, ShieldCheck, Superscript, DivideCircle, Triangle, Ruler, RectangleHorizontal, Shuffle, AlertTriangle, BarChartHorizontal, Scaling, Eraser, GitCompareArrows, Atom, ArrowRightLeft, Circle, Eye, LineChart as LineChartIcon } from 'lucide-react';
 import Button from './common/Button';
-import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend } from 'recharts';
+// FIX: Moved ReferenceLine from lucide-react to recharts import.
+import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 
 
 const math = create(all, { number: 'BigNumber', precision: 64 });
@@ -510,11 +514,16 @@ const EquationSolverTool = () => {
     const [solutions, setSolutions] = useState<any[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [solvedDetails, setSolvedDetails] = useState<SolvedDetails | null>(null);
+    const [graphData, setGraphData] = useState<any[] | null>(null);
+    const [polynomial, setPolynomial] = useState<{fn: (x:number)=>number, expr: string} | null>(null);
+
 
     const handleSolve = useCallback(() => {
         setError(null);
         setSolutions([]);
         setSolvedDetails(null);
+        setGraphData(null);
+        setPolynomial(null);
 
         if (!equation.trim()) {
             setError("Please enter an equation.");
@@ -545,8 +554,6 @@ const EquationSolverTool = () => {
                 return;
             }
             
-            // Create a temporary math instance configured for standard numbers,
-            // as `rationalize` works best with this configuration.
             const tempMath = create(all, { number: 'number' });
             const details = tempMath.rationalize(expressionToSolve, {}, true);
 
@@ -557,13 +564,12 @@ const EquationSolverTool = () => {
             
             const coeffs = details.coefficients.map((c: any) => parseFloat(c.toString()));
             let newSolutions: any[] = [];
+            let isSolvable = true;
 
             if (coeffs.length > 3) {
                 setError("This solver currently supports linear and quadratic equations only (up to x^2).");
-                return;
-            }
-
-            if (coeffs.length === 3) { // Quadratic: ax^2 + bx + c = 0
+                isSolvable = false;
+            } else if (coeffs.length === 3) { // Quadratic: ax^2 + bx + c = 0
                 const c = coeffs[0] || 0;
                 const b = coeffs[1] || 0;
                 const a = coeffs[2] || 0;
@@ -574,6 +580,7 @@ const EquationSolverTool = () => {
                         setSolvedDetails({ type: 'linear', coeffs: { a: b, b: c, c: 0 }});
                     } else {
                         setError(c === 0 ? "Infinite solutions (0 = 0)" : "No solution");
+                        isSolvable = false;
                     }
                 } else {
                     const discriminant = b * b - 4 * a * c;
@@ -598,13 +605,56 @@ const EquationSolverTool = () => {
                     setSolvedDetails({ type: 'linear', coeffs: { a: a_coeff, b: b_const, c: 0 }});
                 } else {
                     setError(b_const === 0 ? "Infinite solutions (0 = 0)" : "No solution");
+                    isSolvable = false;
                 }
             } else if (coeffs.length === 1) {
                  setError(coeffs[0] === 0 ? "Infinite solutions (0 = 0)" : `No solution (${coeffs[0]} = 0)`);
+                 isSolvable = false;
             } else {
                 setError("Equation is not a recognized linear or quadratic polynomial.");
+                isSolvable = false;
             }
             setSolutions(newSolutions);
+
+            // --- Graph Generation Logic ---
+            if (isSolvable) {
+                const node = tempMath.parse(expressionToSolve);
+                const compiledExpr = node.compile();
+                const simplifiedExpr = details.expression.toString();
+                setPolynomial({ fn: (x: number) => compiledExpr.evaluate({ x }), expr: simplifiedExpr });
+
+                const realRoots = newSolutions.filter(s => typeof s === 'number' || (s.im === 0)).map(s => typeof s === 'number' ? s : s.re);
+                
+                let xMin, xMax;
+                if (realRoots.length > 0) {
+                    const minRoot = Math.min(...realRoots);
+                    const maxRoot = Math.max(...realRoots);
+                    const range = Math.max(10, (maxRoot - minRoot) * 1.5);
+                    xMin = minRoot - range * 0.5;
+                    xMax = maxRoot + range * 0.5;
+                } else if (coeffs.length === 3) { // No real roots (quadratic)
+                    const b = coeffs[1] || 0;
+                    const a = coeffs[2] || 0;
+                    const vertexX = -b / (2 * a);
+                    xMin = vertexX - 5;
+                    xMax = vertexX + 5;
+                } else { // Constant or other unsolvable cases
+                    xMin = -10;
+                    xMax = 10;
+                }
+                
+                const data = [];
+                const step = (xMax - xMin) / 100;
+                for (let x = xMin; x <= xMax; x += step) {
+                    try {
+                        const y = compiledExpr.evaluate({ x });
+                        if (typeof y === 'number' && isFinite(y)) {
+                            data.push({ x: parseFloat(x.toPrecision(4)), y: parseFloat(y.toPrecision(4)) });
+                        }
+                    } catch(e) { /* ignore points */ }
+                }
+                setGraphData(data);
+            }
 
         } catch (e: any) {
             setError(e.message || "Could not solve the equation. Ensure it's a valid polynomial in 'x'.");
@@ -619,7 +669,6 @@ const EquationSolverTool = () => {
         'x^2 + x + 1 = 0' // complex roots
     ];
     
-    // Auto-solve on mount for the default equation
     useEffect(() => {
         handleSolve();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -628,64 +677,54 @@ const EquationSolverTool = () => {
     return (
       <div className="bg-brand-surface/50 p-6 rounded-lg">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column: Controls */}
               <div className="space-y-6">
                   <div>
-                      <label htmlFor="equation-input" className="block text-lg font-medium mb-2">
-                          Enter a linear or quadratic equation for 'x'
-                      </label>
+                      <label htmlFor="equation-input" className="block text-lg font-medium mb-2">Enter a linear or quadratic equation for 'x'</label>
                       <div className="flex gap-3">
-                          <input
-                              id="equation-input"
-                              type="text"
-                              value={equation}
-                              onChange={e => setEquation(e.target.value)}
-                              onKeyDown={e => e.key === 'Enter' && handleSolve()}
-                              className="flex-grow w-full bg-gray-900/70 border-gray-600 rounded-md p-3 font-mono text-lg"
-                              placeholder="e.g., 2x + 5 = 10"
-                          />
-                          <Button onClick={handleSolve} className="bg-brand-primary hover:bg-blue-500 h-auto px-6 py-3 text-lg">
-                              Solve
-                          </Button>
+                          <input id="equation-input" type="text" value={equation} onChange={e => setEquation(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSolve()} className="flex-grow w-full bg-gray-900/70 border-gray-600 rounded-md p-3 font-mono text-lg" placeholder="e.g., 2x + 5 = 10" />
+                          <Button onClick={handleSolve} className="bg-brand-primary hover:bg-blue-500 h-auto px-6 py-3 text-lg">Solve</Button>
                       </div>
                   </div>
                   <div>
                       <h3 className="text-lg font-semibold mb-3">Examples</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {exampleEquations.map(ex => (
-                              <button
-                                  key={ex}
-                                  onClick={() => setEquation(ex)}
-                                  className="w-full text-left px-3 py-2 bg-brand-bg hover:bg-gray-600 rounded-lg text-sm font-mono transition-colors"
-                              >
-                                  {ex}
-                              </button>
-                          ))}
+                          {exampleEquations.map(ex => <button key={ex} onClick={() => setEquation(ex)} className="w-full text-left px-3 py-2 bg-brand-bg hover:bg-gray-600 rounded-lg text-sm font-mono transition-colors">{ex}</button>)}
                       </div>
                   </div>
+                  {!error && solutions.length > 0 && (
+                      <div className="space-y-4">
+                          <h3 className="text-xl font-bold text-brand-accent">Solution(s)</h3>
+                          <div className="bg-brand-bg p-4 rounded-lg space-y-3">
+                              {solutions.map((sol, index) => <SolutionCard key={index} solution={sol} />)}
+                          </div>
+                      </div>
+                  )}
+                  {error && (
+                      <div className="flex items-center gap-3 text-red-400 font-semibold p-4 bg-red-900/30 rounded-lg">
+                          <AlertTriangle size={24} />
+                          <span>{error}</span>
+                      </div>
+                  )}
               </div>
-
-              {/* Right Column: Results */}
               <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-brand-accent">Solution(s)</h3>
-                  <div className="bg-brand-bg p-4 rounded-lg min-h-[150px] space-y-3">
-                      {error && (
-                          <div className="flex items-center gap-3 text-red-400 font-semibold p-4 bg-red-900/30 rounded-lg">
-                              <AlertTriangle size={24} />
-                              <span>{error}</span>
+                  {!error && graphData && polynomial && (
+                      <div className="animate-fade-in-down">
+                          <h3 className="text-xl font-bold text-brand-primary flex items-center gap-2 mb-2"><LineChartIcon size={20} /> Solution Graph</h3>
+                          <div className="h-64 w-full bg-brand-bg p-4 rounded-lg">
+                              <ResponsiveContainer>
+                                  <LineChart data={graphData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                      <XAxis type="number" dataKey="x" domain={['dataMin', 'dataMax']} stroke="var(--color-text-secondary)" tick={{ fontSize: 10 }} />
+                                      <YAxis stroke="var(--color-text-secondary)" tick={{ fontSize: 10 }} />
+                                      <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                      <Legend verticalAlign="top" height={36} />
+                                      <ReferenceLine y={0} stroke="var(--color-text-secondary)" strokeDasharray="3 3" />
+                                      <Line type="monotone" dataKey="y" name={`y = ${polynomial.expr}`} stroke="var(--color-primary)" dot={false} strokeWidth={2} />
+                                  </LineChart>
+                              </ResponsiveContainer>
                           </div>
-                      )}
-                      {!error && solutions.length > 0 && (
-                          solutions.map((sol, index) => (
-                              <SolutionCard key={index} solution={sol} />
-                          ))
-                      )}
-                      {!error && solutions.length === 0 && !solvedDetails && (
-                          <div className="flex items-center justify-center h-full text-brand-text-secondary">
-                              <p>Enter an equation and click 'Solve'.</p>
-                          </div>
-                      )}
-                  </div>
+                      </div>
+                  )}
                   {!error && solvedDetails && <FormulaExplainer details={solvedDetails} />}
               </div>
           </div>
