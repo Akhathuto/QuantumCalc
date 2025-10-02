@@ -1,7 +1,8 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
+
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Landmark, PiggyBank, HandCoins, Car, Home, Percent, TrendingUp, Receipt, FileText, Bot, Banknote, Loader, Wind, Calculator, Table, Info, Briefcase } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Area, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line, PieChart, Pie, Cell } from 'recharts';
 import CustomDropdown from './common/CustomDropdown';
 import { getAutoLoanAnalysis, AutoLoanDetails } from '../services/geminiService';
 
@@ -40,7 +41,7 @@ interface CalculatorProps {
   currency: string;
 }
 
-const CustomAreaTooltip = ({ active, payload, label, currency }: any) => {
+const CustomChartTooltip = ({ active, payload, label, currency }: any) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
 
@@ -202,14 +203,14 @@ const LoanCalculator: React.FC<CalculatorProps> = ({ currency }) => {
                     <h3 className="text-xl font-bold mb-4 text-center">Loan Balance Over Time</h3>
                     <div className="h-80 w-full bg-brand-bg/30 p-4 rounded-lg">
                         <ResponsiveContainer>
-                            <AreaChart data={result.amortizationData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
+                            <LineChart data={result.amortizationData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                                 <XAxis dataKey="year" unit=" yr" stroke="var(--color-text-secondary)" />
                                 <YAxis tickFormatter={(val) => formatCurrency(val, currency).replace(/\.00$/, '')} stroke="var(--color-text-secondary)" width={80} />
-                                <Tooltip content={<CustomAreaTooltip currency={currency} />} />
+                                <Tooltip content={<CustomChartTooltip currency={currency} />} />
                                 <Legend />
-                                <Area type="monotone" dataKey="Remaining Balance" stroke="var(--color-primary)" fill="var(--color-primary)" fillOpacity={0.3} />
-                            </AreaChart>
+                                <Line type="monotone" dataKey="Remaining Balance" stroke="var(--color-primary)" dot={false} />
+                            </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
@@ -302,16 +303,16 @@ const InvestmentCalculator: React.FC<CalculatorProps> = ({ currency }) => {
                     <h3 className="text-xl font-bold mb-4 text-center">Investment Growth Over Time</h3>
                     <div className="h-80 w-full bg-brand-bg/30 p-4 rounded-lg">
                         <ResponsiveContainer>
-                            <AreaChart data={result.growthData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
+                            <LineChart data={result.growthData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                                 <XAxis dataKey="year" unit=" yr" stroke="var(--color-text-secondary)" />
                                 <YAxis tickFormatter={(val) => formatCurrency(val, currency).replace(/\.00$/, '')} stroke="var(--color-text-secondary)" width={80} />
-                                <Tooltip content={<CustomAreaTooltip currency={currency} />} />
+                                <Tooltip content={<CustomChartTooltip currency={currency} />} />
                                 <Legend />
-                                <Area type="monotone" dataKey="Initial Principal" name="Principal" stackId="1" stroke="#9f7aea" fill="#9f7aea" />
-                                <Area type="monotone" dataKey="Total Contributions" name="Contributions" stackId="1" stroke="#4299e1" fill="#4299e1" />
-                                <Area type="monotone" dataKey="Interest Earned" name="Interest" stackId="1" stroke="#48bb78" fill="#48bb78" />
-                            </AreaChart>
+                                <Line type="monotone" dataKey="Initial Principal" name="Principal" stroke="#9f7aea" dot={false} />
+                                <Line type="monotone" dataKey="Total Contributions" name="Contributions" stroke="#4299e1" dot={false} />
+                                <Line type="monotone" dataKey="Interest Earned" name="Interest" stroke="#48bb78" dot={false} />
+                            </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
@@ -560,16 +561,16 @@ const MortgageCalculator: React.FC<CalculatorProps> = ({ currency }) => {
                     <h3 className="text-xl font-bold mb-4 text-center">Loan Amortization Schedule</h3>
                     <div className="h-80 w-full bg-brand-bg/30 p-4 rounded-lg">
                         <ResponsiveContainer>
-                            <AreaChart data={result.amortizationData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
+                            <LineChart data={result.amortizationData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                                 <XAxis dataKey="year" unit=" yr" stroke="var(--color-text-secondary)" />
                                 <YAxis tickFormatter={(val) => formatCurrency(val, currency).replace(/\.00$/, '')} stroke="var(--color-text-secondary)" width={80} />
-                                <Tooltip content={<CustomAreaTooltip currency={currency} />} />
+                                <Tooltip content={<CustomChartTooltip currency={currency} />} />
                                 <Legend />
-                                <Area type="monotone" dataKey="Principal Paid (Total)" stackId="1" stroke="#48bb78" fill="#48bb78" name="Principal Paid" />
-                                <Area type="monotone" dataKey="Interest Paid (Total)" stackId="1" stroke="#ed8936" fill="#ed8936" name="Interest Paid" />
-                                <Area type="monotone" dataKey="Remaining Balance" stroke="#4299e1" fill="#4299e1" fillOpacity={0.3} name="Loan Balance" />
-                            </AreaChart>
+                                <Line type="monotone" dataKey="Principal Paid (Total)" stroke="#48bb78" name="Principal Paid" dot={false} />
+                                <Line type="monotone" dataKey="Interest Paid (Total)" stroke="#ed8936" name="Interest Paid" dot={false} />
+                                <Line type="monotone" dataKey="Remaining Balance" stroke="#4299e1" name="Loan Balance" dot={false} />
+                            </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
@@ -754,14 +755,14 @@ const AutoLoanCalculator: React.FC<CalculatorProps> = ({ currency }) => {
                     <h3 className="text-xl font-bold mb-4 text-center">Loan Balance Over Time</h3>
                     <div className="h-80 w-full bg-brand-bg/30 p-4 rounded-lg">
                         <ResponsiveContainer>
-                            <AreaChart data={result.amortizationData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
+                            <LineChart data={result.amortizationData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                                 <XAxis dataKey="year" unit=" yr" stroke="var(--color-text-secondary)" />
                                 <YAxis tickFormatter={(val) => formatCurrency(val, currency).replace(/\.00$/, '')} stroke="var(--color-text-secondary)" width={80} />
-                                <Tooltip content={<CustomAreaTooltip currency={currency} />} />
+                                <Tooltip content={<CustomChartTooltip currency={currency} />} />
                                 <Legend />
-                                <Area type="monotone" dataKey="Remaining Balance" stroke="var(--color-primary)" fill="var(--color-primary)" fillOpacity={0.3} />
-                            </AreaChart>
+                                <Line type="monotone" dataKey="Remaining Balance" stroke="var(--color-primary)" dot={false} />
+                            </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
@@ -1031,16 +1032,16 @@ const RetirementCalculator: React.FC<CalculatorProps> = ({ currency }) => {
                     <h3 className="text-xl font-bold mb-4 text-center">Projected Growth</h3>
                     <div className="h-80 w-full bg-brand-bg/30 p-4 rounded-lg">
                         <ResponsiveContainer>
-                            <AreaChart data={result.growthData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
+                            <LineChart data={result.growthData} margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                                 <XAxis dataKey="year" name="Age" stroke="var(--color-text-secondary)" />
                                 <YAxis tickFormatter={(val) => formatCurrency(val, currency).replace(/\.00$/, '')} stroke="var(--color-text-secondary)" width={80} />
-                                <Tooltip content={<CustomAreaTooltip currency={currency} />} />
+                                <Tooltip content={<CustomChartTooltip currency={currency} />} />
                                 <Legend />
-                                <Area type="monotone" dataKey="Initial Principal" name="Principal" stackId="1" stroke="#9f7aea" fill="#9f7aea" />
-                                <Area type="monotone" dataKey="Total Contributions" name="Contributions" stackId="1" stroke="#4299e1" fill="#4299e1" />
-                                <Area type="monotone" dataKey="Interest Earned" name="Interest" stackId="1" stroke="#48bb78" fill="#48bb78" />
-                            </AreaChart>
+                                <Line type="monotone" dataKey="Initial Principal" name="Principal" stroke="#9f7aea" dot={false} />
+                                <Line type="monotone" dataKey="Total Contributions" name="Contributions" stroke="#4299e1" dot={false} />
+                                <Line type="monotone" dataKey="Interest Earned" name="Interest" stroke="#48bb78" dot={false} />
+                            </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>

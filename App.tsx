@@ -1,21 +1,24 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Header from './components/common/Header';
 import Calculator from './components/Calculator';
 import History from './components/History';
-import Graph from './components/Graph';
-import MathTools from './components/MathTools';
 import { UnitConverter } from './components/UnitConverter';
-import CurrencyConverter from './components/CurrencyConverter';
 import BaseConverter from './components/BaseConverter';
-import FinancialCalculator from './components/FinancialCalculator';
 import DateCalculator from './components/DateCalculator';
-import HealthCalculator from './components/HealthCalculator';
 import About from './components/About';
 import TermsAndLicense from './components/TermsAndLicense';
 import Settings from './components/Settings';
 import Help from './components/Help';
 import { AppTab, HistoryEntry } from './types';
+import LoadingSpinner from './components/common/LoadingSpinner';
+
+// Lazy-load components with heavy dependencies (like charting libraries) to prevent startup crashes
+const Graph = lazy(() => import('./components/Graph'));
+const MathTools = lazy(() => import('./components/MathTools'));
+const CurrencyConverter = lazy(() => import('./components/CurrencyConverter'));
+const FinancialCalculator = lazy(() => import('./components/FinancialCalculator'));
+const HealthCalculator = lazy(() => import('./components/HealthCalculator'));
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>('calculator');
@@ -67,38 +70,61 @@ const App: React.FC = () => {
   };
 
   const renderActiveTab = () => {
+    let TabComponent;
+
     switch (activeTab) {
       case 'calculator':
-        return <Calculator addToHistory={addToHistory} expressionToLoad={expressionToLoad} onExpressionLoaded={handleExpressionLoaded} />;
+        TabComponent = <Calculator addToHistory={addToHistory} expressionToLoad={expressionToLoad} onExpressionLoaded={handleExpressionLoaded} />;
+        break;
       case 'graphing':
-        return <Graph />;
+        TabComponent = <Graph />;
+        break;
       case 'math-tools':
-        return <MathTools />;
+        TabComponent = <MathTools />;
+        break;
       case 'units':
-        return <UnitConverter />;
+        TabComponent = <UnitConverter />;
+        break;
       case 'currency':
-        return <CurrencyConverter />;
+        TabComponent = <CurrencyConverter />;
+        break;
       case 'base':
-        return <BaseConverter />;
+        TabComponent = <BaseConverter />;
+        break;
       case 'financial':
-        return <FinancialCalculator />;
+        TabComponent = <FinancialCalculator />;
+        break;
       case 'date':
-        return <DateCalculator />;
+        TabComponent = <DateCalculator />;
+        break;
       case 'health':
-        return <HealthCalculator />;
+        TabComponent = <HealthCalculator />;
+        break;
       case 'history':
-        return <History history={history} loadFromHistory={loadFromHistory} clearHistory={clearHistory} toggleFavorite={toggleFavorite} />;
+        TabComponent = <History history={history} loadFromHistory={loadFromHistory} clearHistory={clearHistory} toggleFavorite={toggleFavorite} />;
+        break;
       case 'help':
-        return <Help />;
-        case 'about':
-        return <About />;
+        TabComponent = <Help />;
+        break;
+      case 'about':
+        TabComponent = <About />;
+        break;
       case 'settings':
-        return <Settings />;
+        TabComponent = <Settings />;
+        break;
       case 'terms':
-        return <TermsAndLicense />;
+        TabComponent = <TermsAndLicense />;
+        break;
       default:
-        return <Calculator addToHistory={addToHistory} expressionToLoad={expressionToLoad} onExpressionLoaded={handleExpressionLoaded} />;
+        TabComponent = <Calculator addToHistory={addToHistory} expressionToLoad={expressionToLoad} onExpressionLoaded={handleExpressionLoaded} />;
     }
+    
+    // Wrap all tab content in a Suspense boundary to handle lazy-loading
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        {TabComponent}
+      </Suspense>
+    );
   };
 
   return (

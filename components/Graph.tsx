@@ -10,26 +10,6 @@ import { AlertTriangle, Download, ChevronDown } from 'lucide-react';
 
 const math = create(all);
 
-// Helper to darken a hex color for gradients
-const darkenColor = (hex: string, percent: number): string => {
-    try {
-        let r = parseInt(hex.substring(1, 3), 16);
-        let g = parseInt(hex.substring(3, 5), 16);
-        let b = parseInt(hex.substring(5, 7), 16);
-
-        r = Math.floor(r * (100 - percent) / 100);
-        g = Math.floor(g * (100 - percent) / 100);
-        b = Math.floor(b * (100 - percent) / 100);
-
-        const toHex = (c: number) => ('00' + c.toString(16)).slice(-2);
-
-        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-    } catch (e) {
-        return hex; // fallback if hex is invalid
-    }
-};
-
-
 // --- Reusable UI ---
 const SubNavButton: React.FC<{ label: string; isActive: boolean; onClick: () => void }> = ({ label, isActive, onClick }) => (
     <button
@@ -308,7 +288,6 @@ const BarChartCreator: React.FC = () => {
     const [xLabel, setXLabel] = useState('Animal');
     const [yLabel, setYLabel] = useState('Population');
     const [barColor, setBarColor] = useState('#48bb78');
-    const [enable3d, setEnable3d] = useState(true);
     const chartRef = useRef<HTMLDivElement>(null);
     
     const { data, error } = useMemo(() => {
@@ -343,7 +322,6 @@ const BarChartCreator: React.FC = () => {
                             <label htmlFor="bar_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Bar Color</label>
                             <input id="bar_color" type="color" value={barColor} onChange={e => setBarColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
                         </div>
-                        <ToggleSwitch label="Enable 3D Effect" checked={enable3d} onChange={setEnable3d} />
                     </CollapsibleSection>
                 </div>
                 <div className="lg:col-span-2">
@@ -352,18 +330,12 @@ const BarChartCreator: React.FC = () => {
                         <div className="h-96 w-full">
                             <ResponsiveContainer>
                                 <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                                    <defs>
-                                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={barColor} stopOpacity={0.9}/>
-                                            <stop offset="95%" stopColor={darkenColor(barColor, 20)} stopOpacity={1}/>
-                                        </linearGradient>
-                                    </defs>
                                     <CartesianGrid stroke="var(--color-border)" />
                                     <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
                                     <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
                                     <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
                                     <Legend />
-                                    <Bar dataKey="value" fill={enable3d ? "url(#barGradient)" : barColor} name={yLabel} />
+                                    <Bar dataKey="value" fill={barColor} name={yLabel} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -382,7 +354,6 @@ const HistogramCreator: React.FC = () => {
     const [xLabel, setXLabel] = useState('Value Bins');
     const [yLabel, setYLabel] = useState('Frequency');
     const [barColor, setBarColor] = useState('#ed8936');
-    const [enable3d, setEnable3d] = useState(true);
     const chartRef = useRef<HTMLDivElement>(null);
     
     const { data, error } = useMemo(() => {
@@ -433,7 +404,6 @@ const HistogramCreator: React.FC = () => {
                             <label htmlFor="hist_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Bar Color</label>
                             <input id="hist_color" type="color" value={barColor} onChange={e => setBarColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
                         </div>
-                        <ToggleSwitch label="Enable 3D Effect" checked={enable3d} onChange={setEnable3d} />
                      </CollapsibleSection>
                  </div>
                  <div className="lg:col-span-2">
@@ -442,18 +412,12 @@ const HistogramCreator: React.FC = () => {
                         <div className="h-96 w-full">
                             <ResponsiveContainer>
                                 <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }} barCategoryGap="0%">
-                                    <defs>
-                                        <linearGradient id="histGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={barColor} stopOpacity={0.9}/>
-                                            <stop offset="95%" stopColor={darkenColor(barColor, 20)} stopOpacity={1}/>
-                                        </linearGradient>
-                                    </defs>
                                     <CartesianGrid stroke="var(--color-border)" />
                                     <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" tick={{fontSize: 10}} />
                                     <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" allowDecimals={false} />
                                     <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
                                     <Legend />
-                                    <Bar dataKey="count" fill={enable3d ? "url(#histGradient)" : barColor} name={yLabel} />
+                                    <Bar dataKey="count" fill={barColor} name={yLabel} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
