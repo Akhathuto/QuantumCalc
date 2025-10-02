@@ -107,13 +107,18 @@ const EquationSolver: React.FC = () => {
             const details = math.rationalize(expressionToSolve, {}, true);
 
             if (!details.coefficients) {
-                 setError("Equation is not a recognized linear or quadratic polynomial.");
+                 setError("Equation is not a recognized polynomial.");
                  return;
             }
 
             const coeffs = details.coefficients.map(c => c.isFraction ? c.valueOf() : parseFloat(c.toString()));
             
             let newSolutions: any[] = [];
+
+            if (coeffs.length > 3) {
+                setError("This solver currently supports linear and quadratic equations only (up to x^2).");
+                return;
+            }
 
             if (coeffs.length === 3) { // Quadratic: ax^2 + bx + c = 0
                 const c = coeffs[0] || 0;
@@ -175,6 +180,7 @@ const EquationSolver: React.FC = () => {
         '2x - 10 = 0',
         'x^2 - 4 = 0',
         'x^2 + 2x + 1 = 0',
+        'x^3 - 8 = 0', // For unsupported error
         'x^2 + x + 1 = 0' // complex roots
     ];
 

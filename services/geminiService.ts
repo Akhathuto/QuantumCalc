@@ -147,3 +147,53 @@ export const getCurrencyForecast = async (from: string, to: string): Promise<str
     return "Could not retrieve analysis at this time. Please try again later.";
   }
 };
+
+export interface AutoLoanDetails {
+  loanAmount: number;
+  interestRate: number;
+  termYears: number;
+  vehiclePrice: number;
+  downPayment: number;
+}
+
+export const getAutoLoanAnalysis = async (details: AutoLoanDetails): Promise<string> => {
+  const ai = getAiClient();
+  if (!ai) {
+    return missingKeyForecast;
+  }
+
+  try {
+    const { loanAmount, interestRate, termYears, vehiclePrice, downPayment } = details;
+    const prompt = `
+      Analyze the following auto loan details for a user. Provide a brief, helpful, and educational analysis in 2-3 short bullet points.
+      - Loan Amount: ${loanAmount.toFixed(2)}
+      - Interest Rate (APR): ${interestRate}%
+      - Loan Term: ${termYears} years
+      - Vehicle Price: ${vehiclePrice.toFixed(2)}
+      - Down Payment: ${downPayment.toFixed(2)}
+      
+      Focus on providing general insights. For example, comment on the interest rate (is it generally low, average, or high for the current market?), the impact of the down payment on the loan, or suggest the potential savings from making extra payments.
+      
+      RULES:
+      - DO NOT give financial advice.
+      - DO NOT use speculative language (e.g., "you will save"). Use conditional language (e.g., "you could save").
+      - Keep the tone encouraging and informative.
+      - The entire response should be under 100 words.
+      - Start the response with a concise summary sentence, followed by bullet points.
+    `;
+    
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+    });
+    
+    return response.text.trim();
+
+  } catch (error) {
+    console.error("Error fetching auto loan analysis from Gemini:", error);
+    if (error instanceof Error && error.message.includes('API key not valid')) {
+        return invalidKeyForecast;
+    }
+    return "Could not retrieve analysis at this time. Please try again later.";
+  }
+};

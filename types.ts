@@ -1,3 +1,4 @@
+
 export interface HistoryEntry {
   expression: string;
   result: string;
@@ -20,12 +21,9 @@ export interface Explanation {
 export type AppTab =
   | 'calculator'
   | 'graphing'
-  | 'matrix'
-  | 'statistics'
-  | 'equations'
+  | 'math-tools'
   | 'units'
   | 'currency'
-  | 'percentage'
   | 'base'
   | 'financial'
   | 'date'

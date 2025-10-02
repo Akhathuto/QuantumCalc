@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Calculator as CalculatorIcon,
@@ -52,16 +53,11 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabClick }) => {
             isActive={activeTab === 'graphing'}
             onClick={() => onTabClick('graphing')}
           />
-          <DropdownTab
+          <Tab
             label="Math Tools"
             Icon={Beaker}
-            activeTab={activeTab}
-            onTabClick={onTabClick}
-            subTabs={[
-              { id: 'matrix', label: 'Matrix Calculator', Icon: Table },
-              { id: 'statistics', label: 'Statistics Calculator', Icon: BarChart },
-              { id: 'equations', label: 'Equation Solver', Icon: FunctionSquare },
-            ]}
+            isActive={activeTab === 'math-tools'}
+            onClick={() => onTabClick('math-tools')}
           />
           <DropdownTab
             label="Converters"
@@ -71,7 +67,6 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabClick }) => {
             subTabs={[
               { id: 'units', label: 'Unit Converter', Icon: Scale },
               { id: 'currency', label: 'Currency Converter', Icon: Banknote },
-              { id: 'percentage', label: 'Percentage Calculator', Icon: Percent },
               { id: 'base', label: 'Base Converter', Icon: Binary },
             ]}
           />

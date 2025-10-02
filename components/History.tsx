@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo } from 'react';
 import { HistoryEntry } from '../types';
-import { Star, Search } from 'lucide-react';
+import { Star, Search, Download } from 'lucide-react';
 
 interface HistoryProps {
   history: HistoryEntry[];
@@ -32,18 +31,71 @@ const History: React.FC<HistoryProps> = ({ history, loadFromHistory, clearHistor
     e.stopPropagation(); // Prevent loading the history item when clicking the star
     toggleFavorite(timestamp);
   };
+
+  const exportHistory = (format: 'csv' | 'json') => {
+      if (history.length === 0) return;
+
+      let content = '';
+      let mimeType = '';
+      let fileName = '';
+
+      if (format === 'json') {
+        content = JSON.stringify(history, null, 2);
+        mimeType = 'application/json';
+        fileName = 'quantum_calc_history.json';
+      } else { // csv
+        const header = '"Timestamp","Expression","Result","Is Favorite"\n';
+        const rows = history.map(entry => {
+          const escapeCsv = (str: string) => `"${str.replace(/"/g, '""')}"`;
+          return [
+            escapeCsv(entry.timestamp),
+            escapeCsv(entry.expression),
+            escapeCsv(entry.result),
+            entry.isFavorite ? 'true' : 'false'
+          ].join(',');
+        }).join('\n');
+        content = header + rows;
+        mimeType = 'text/csv;charset=utf-8;';
+        fileName = 'quantum_calc_history.csv';
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    };
   
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-brand-primary">Calculation History</h2>
         {history.length > 0 && (
-          <button 
-            onClick={clearHistory}
-            className="px-4 py-2 bg-red-500/80 hover:bg-red-500 text-white rounded-md text-sm font-semibold transition-colors"
-          >
-            Clear History
-          </button>
+          <div className="flex gap-2">
+            <button
+                onClick={() => exportHistory('csv')}
+                className="flex items-center gap-2 px-3 py-2 bg-brand-accent/80 hover:bg-brand-accent text-white rounded-md text-sm font-semibold transition-colors"
+                title="Export as CSV"
+            >
+                <Download size={16} /> Export CSV
+            </button>
+            <button
+                onClick={() => exportHistory('json')}
+                className="flex items-center gap-2 px-3 py-2 bg-brand-primary/80 hover:bg-brand-primary text-white rounded-md text-sm font-semibold transition-colors"
+                title="Export as JSON"
+            >
+                <Download size={16} /> Export JSON
+            </button>
+            <button 
+              onClick={clearHistory}
+              className="px-4 py-2 bg-red-500/80 hover:bg-red-500 text-white rounded-md text-sm font-semibold transition-colors"
+            >
+              Clear History
+            </button>
+          </div>
         )}
       </div>
       

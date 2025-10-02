@@ -1,13 +1,32 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, ScatterChart, Scatter, BarChart, Bar
 } from 'recharts';
 import { create, all } from 'mathjs';
-import { AlertTriangle, Download } from 'lucide-react';
+import { AlertTriangle, Download, ChevronDown } from 'lucide-react';
 
 const math = create(all);
+
+// Helper to darken a hex color for gradients
+const darkenColor = (hex: string, percent: number): string => {
+    try {
+        let r = parseInt(hex.substring(1, 3), 16);
+        let g = parseInt(hex.substring(3, 5), 16);
+        let b = parseInt(hex.substring(5, 7), 16);
+
+        r = Math.floor(r * (100 - percent) / 100);
+        g = Math.floor(g * (100 - percent) / 100);
+        b = Math.floor(b * (100 - percent) / 100);
+
+        const toHex = (c: number) => ('00' + c.toString(16)).slice(-2);
+
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    } catch (e) {
+        return hex; // fallback if hex is invalid
+    }
+};
+
 
 // --- Reusable UI ---
 const SubNavButton: React.FC<{ label: string; isActive: boolean; onClick: () => void }> = ({ label, isActive, onClick }) => (
@@ -36,12 +55,42 @@ const TextArea = ({ label, id, ...props }: React.TextareaHTMLAttributes<HTMLText
 const ErrorDisplay: React.FC<{ error: string | null }> = ({ error }) => {
     if (!error) return null;
     return (
-        <div className="flex items-center gap-2 text-red-400 p-3 bg-red-900/50 rounded-md mb-4">
+        <div className="flex items-center gap-2 text-red-400 p-3 bg-red-900/50 rounded-md">
             <AlertTriangle size={20} />
             <span>{error}</span>
         </div>
     );
 };
+
+const ToggleSwitch: React.FC<{ label: string; checked: boolean; onChange: (checked: boolean) => void }> = ({ label, checked, onChange }) => (
+    <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-brand-text-secondary">{label}</label>
+        <button
+            onClick={() => onChange(!checked)}
+            role="switch"
+            aria-checked={checked}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-brand-primary' : 'bg-gray-600'}`}
+        >
+            <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
+            />
+        </button>
+    </div>
+);
+
+
+const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <details className="border border-brand-border rounded-lg group" open>
+        <summary className="p-3 cursor-pointer font-semibold hover:bg-brand-border/30 list-none flex justify-between items-center">
+            {title}
+            <ChevronDown className="transform transition-transform duration-200 group-open:rotate-180" size={18} />
+        </summary>
+        <div className="p-4 border-t border-brand-border space-y-4">
+            {children}
+        </div>
+    </details>
+);
+
 
 const ExportButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
     <button
@@ -63,36 +112,28 @@ const exportToPng = (chartRef: React.RefObject<HTMLDivElement>, fileName: string
     }
 
     const { width, height } = svg.getBoundingClientRect();
-
-    // Get computed styles for CSS variables to support themes
     const computedStyle = getComputedStyle(document.documentElement);
-    const cssVariables = [
-        '--color-bg', '--color-surface', '--color-primary', '--color-secondary',
-        '--color-accent', '--color-text', '--color-text-secondary', '--color-border'
-    ];
-    const styles = cssVariables.map(v => `${v}: ${computedStyle.getPropertyValue(v).trim()};`).join('\n');
     
-    // Serialize SVG and embed styles
+    // Draw background on canvas to handle themes and transparency
+    const canvas = document.createElement('canvas');
+    canvas.width = width * 2; // Increase resolution for better quality
+    canvas.height = height * 2;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.scale(2, 2);
+    ctx.fillStyle = computedStyle.getPropertyValue('--color-surface').trim() || '#2d3748';
+    ctx.fillRect(0, 0, width, height);
+
     const svgString = new XMLSerializer().serializeToString(svg);
-    const svgWithStyles = svgString.replace('<svg', `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"`)
-                                   .replace('>', `><style>:root { ${styles} }</style>`);
-
-    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgWithStyles)))}`;
-
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    
     const img = new Image();
     img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        // Draw background for transparency issues
-        ctx.fillStyle = computedStyle.getPropertyValue('--color-surface').trim() || '#2d3748';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
-
-        // Trigger download
+        URL.revokeObjectURL(url);
+        
         const pngUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.download = fileName;
@@ -101,77 +142,45 @@ const exportToPng = (chartRef: React.RefObject<HTMLDivElement>, fileName: string
         link.click();
         document.body.removeChild(link);
     };
-    img.src = dataUrl;
+    img.onerror = (e) => {
+        console.error("Image loading failed for SVG export:", e);
+        URL.revokeObjectURL(url);
+    };
+    img.src = url;
 };
 
 
 // --- Chart Components ---
 
 const FunctionPlotter: React.FC = () => {
-    const LOCAL_STORAGE_KEY = 'graphing_functionPlotter_settings';
-
-    const initialState = useMemo(() => {
-        const defaultState = {
-            expression: 'x^2',
-            xMin: '-10',
-            xMax: '10',
-            title: 'Function Plot',
-            xLabel: 'x-axis',
-            yLabel: 'y-axis',
-            lineColor: '#4299e1',
-        };
-        try {
-            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-            return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
-        } catch (e) {
-            console.error("Failed to load FunctionPlotter state:", e);
-            return defaultState;
-        }
-    }, []);
-
-    const [expression, setExpression] = useState(initialState.expression);
-    const [xMin, setXMin] = useState(initialState.xMin);
-    const [xMax, setXMax] = useState(initialState.xMax);
-    const [title, setTitle] = useState(initialState.title);
-    const [xLabel, setXLabel] = useState(initialState.xLabel);
-    const [yLabel, setYLabel] = useState(initialState.yLabel);
-    const [lineColor, setLineColor] = useState(initialState.lineColor);
+    const [expression, setExpression] = useState('sin(x)');
+    const [xMin, setXMin] = useState('-10');
+    const [xMax, setXMax] = useState('10');
+    const [title, setTitle] = useState('Function Plot');
+    const [xLabel, setXLabel] = useState('x');
+    const [yLabel, setYLabel] = useState('f(x)');
+    const [lineColor, setLineColor] = useState('#4299e1');
+    const [enable3d, setEnable3d] = useState(true);
     const chartRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        try {
-            const stateToSave = { expression, xMin, xMax, title, xLabel, yLabel, lineColor };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
-        } catch (e) {
-            console.error("Failed to save FunctionPlotter state:", e);
-        }
-    }, [expression, xMin, xMax, title, xLabel, yLabel, lineColor]);
 
     const { data, error } = useMemo(() => {
         const min = parseFloat(xMin);
         const max = parseFloat(xMax);
-
-        if (isNaN(min) || isNaN(max)) return { data: [], error: "X Min and X Max must be valid numbers."};
-        if (min >= max) return { data: [], error: "X Max must be greater than X Min." };
+        if (isNaN(min) || isNaN(max)) return { data: [], error: "X Min/Max must be numbers."};
+        if (min >= max) return { data: [], error: "X Max must be > X Min." };
         if (!expression.trim()) return { data: [], error: "Please enter a function." };
 
         try {
             const node = math.parse(expression);
             const code = node.compile();
-            const points = [];
-            const step = (max - min) / 200;
-
-            for (let x = min; x <= max; x += step) {
-                try {
-                    const y = code.evaluate({ x });
-                    if (typeof y === 'number' && isFinite(y)) {
-                        points.push({ x: parseFloat(x.toPrecision(4)), y });
-                    }
-                } catch (e) { /* Skip points where function is undefined */ }
-            }
-            return { data: points, error: null };
+            const points = Array.from({ length: 201 }, (_, i) => {
+                const x = min + (i * (max - min)) / 200;
+                const y = code.evaluate({ x });
+                return (typeof y === 'number' && isFinite(y)) ? { x: parseFloat(x.toPrecision(4)), y } : null;
+            }).filter(p => p !== null);
+            return { data: points as {x: number, y: number}[], error: null };
         } catch (e: any) {
-             return { data: [], error: e.message || 'Invalid function. Use "x" as the variable.' };
+             return { data: [], error: e.message || 'Invalid function.' };
         }
     }, [xMin, xMax, expression]);
     
@@ -179,256 +188,291 @@ const FunctionPlotter: React.FC = () => {
 
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 items-end">
-                <Input id="function_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
-                <Input id="function_expr" label="Function y = f(x)" type="text" value={expression} onChange={e => setExpression(e.target.value)} placeholder="e.g., sin(x)" />
-                <div className="grid grid-cols-2 gap-2">
-                    <Input id="function_xmin" label="X Min" type="text" value={xMin} onChange={e => setXMin(e.target.value)} />
-                    <Input id="function_xmax" label="X Max" type="text" value={xMax} onChange={e => setXMax(e.target.value)} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1 space-y-4">
+                    <Input id="function_expr" label="Function y = f(x)" type="text" value={expression} onChange={e => setExpression(e.target.value)} placeholder="e.g., sin(x)" />
+                     <div className="grid grid-cols-2 gap-2">
+                        <Input id="function_xmin" label="X Min" type="text" value={xMin} onChange={e => setXMin(e.target.value)} />
+                        <Input id="function_xmax" label="X Max" type="text" value={xMax} onChange={e => setXMax(e.target.value)} />
+                    </div>
+                    <ErrorDisplay error={error} />
+                    <CollapsibleSection title="Customize Chart">
+                         <Input id="function_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
+                         <Input id="function_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
+                         <Input id="function_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
+                         <div>
+                            <label htmlFor="line_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Line Color</label>
+                            <input id="line_color" type="color" value={lineColor} onChange={e => setLineColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+                        </div>
+                        <ToggleSwitch label="Enable 3D Effect" checked={enable3d} onChange={setEnable3d} />
+                    </CollapsibleSection>
                 </div>
-                 <div className="grid grid-cols-2 gap-2">
-                    <Input id="function_xlabel" label="X Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
-                    <Input id="function_ylabel" label="Y Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
-                </div>
-                 <div>
-                    <label htmlFor="line_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Line Color</label>
-                    <input id="line_color" type="color" value={lineColor} onChange={e => setLineColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+                <div className="lg:col-span-2">
+                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                    <div className="h-96 w-full" ref={chartRef}>
+                        <ResponsiveContainer>
+                            <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
+                                <defs>
+                                    <linearGradient id="functionGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor={lineColor} stopOpacity={0.8}/>
+                                        <stop offset="95%" stopColor={lineColor} stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                <XAxis type="number" dataKey="x" domain={['dataMin', 'dataMax']} stroke="var(--color-text-secondary)" label={{ value: xLabel, position: 'insideBottom', offset: -15 }}/>
+                                <YAxis stroke="var(--color-text-secondary)" label={{ value: yLabel, angle: -90, position: 'insideLeft' }}/>
+                                <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                <Legend />
+                                <Area type="monotone" dataKey="y" stroke={lineColor} strokeWidth={2} fillOpacity={1} fill={enable3d ? "url(#functionGradient)" : "transparent"} name={`y = ${expression}`} />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <ExportButton onClick={handleExport} />
                 </div>
             </div>
-            <ErrorDisplay error={error} />
-            <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
-            <div className="h-96 w-full mt-4" ref={chartRef}>
-                <ResponsiveContainer>
-                    <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                        <XAxis type="number" dataKey="x" domain={['dataMin', 'dataMax']} stroke="var(--color-text-secondary)" label={{ value: xLabel, position: 'insideBottom', offset: -15 }}/>
-                        <YAxis stroke="var(--color-text-secondary)" label={{ value: yLabel, angle: -90, position: 'insideLeft' }}/>
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                        <Legend />
-                        <Line type="monotone" dataKey="y" stroke={lineColor} strokeWidth={2} dot={false} name={`y = ${expression}`} />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
-            <ExportButton onClick={handleExport} />
         </div>
     );
 };
 
 const ScatterPlotter: React.FC = () => {
-    const LOCAL_STORAGE_KEY = 'graphing_scatterPlotter_settings';
-
-    const initialState = useMemo(() => {
-        const defaultState = {
-            dataStr: '1, 5\n2, 8\n3, 6\n4, 9\n5, 7',
-            title: 'Sample Scatter Plot',
-            xLabel: 'X-Axis',
-            yLabel: 'Y-Axis',
-            pointColor: '#4299e1',
-        };
-        try {
-            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-            return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
-        } catch (e) {
-            console.error("Failed to load ScatterPlotter state:", e);
-            return defaultState;
-        }
-    }, []);
-
-    const [dataStr, setDataStr] = useState(initialState.dataStr);
-    const [title, setTitle] = useState(initialState.title);
-    const [xLabel, setXLabel] = useState(initialState.xLabel);
-    const [yLabel, setYLabel] = useState(initialState.yLabel);
-    const [pointColor, setPointColor] = useState(initialState.pointColor);
+    const [dataStr, setDataStr] = useState('1, 5\n2, 8\n3, 6\n4, 9\n5, 7');
+    const [title, setTitle] = useState('Sample Scatter Plot');
+    const [xLabel, setXLabel] = useState('X-Axis');
+    const [yLabel, setYLabel] = useState('Y-Axis');
+    const [pointColor, setPointColor] = useState('#4299e1');
     const chartRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        try {
-            const stateToSave = { dataStr, title, xLabel, yLabel, pointColor };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
-        } catch (e) {
-            console.error("Failed to save ScatterPlotter state:", e);
-        }
-    }, [dataStr, title, xLabel, yLabel, pointColor]);
-
-
+    
     const { data, error } = useMemo(() => {
         if (!dataStr.trim()) return { data: [], error: "Please enter data." };
-        const points = [];
-        const lines = dataStr.split('\n');
-        for (let i = 0; i < lines.length; i++) {
-            const parts = lines[i].split(/[,;\s]+/).filter(Boolean);
-            if (parts.length !== 2) return { data: [], error: `Invalid format on line ${i + 1}. Use 'X, Y'.` };
-            const x = parseFloat(parts[0]);
-            const y = parseFloat(parts[1]);
-            if (isNaN(x) || isNaN(y)) return { data: [], error: `Invalid number on line ${i + 1}.` };
-            points.push({ x, y });
-        }
-        return { data: points, error: null };
+        try {
+            const points = dataStr.split('\n').map((line, i) => {
+                const parts = line.split(/[,;\s]+/).filter(Boolean);
+                if (parts.length !== 2) throw new Error(`Invalid format on line ${i + 1}. Use 'X, Y'.`);
+                const [x, y] = [parseFloat(parts[0]), parseFloat(parts[1])];
+                if (isNaN(x) || isNaN(y)) throw new Error(`Invalid number on line ${i + 1}.`);
+                return { x, y };
+            });
+            return { data: points, error: null };
+        } catch (e: any) { return { data: [], error: e.message }; }
     }, [dataStr]);
 
     const handleExport = () => exportToPng(chartRef, `${title.replace(/\s+/g, '_') || 'scatter-plot'}.png`);
 
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <Input id="scatter_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
-                <TextArea id="scatter_data" label="Data (X,Y per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
-                <Input id="scatter_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
-                <Input id="scatter_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
-                 <div>
-                    <label htmlFor="scatter_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Point Color</label>
-                    <input id="scatter_color" type="color" value={pointColor} onChange={e => setPointColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1 space-y-4">
+                     <TextArea id="scatter_data" label="Data (X,Y per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
+                     <ErrorDisplay error={error} />
+                     <CollapsibleSection title="Customize Chart">
+                         <Input id="scatter_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
+                         <Input id="scatter_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
+                         <Input id="scatter_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
+                         <div>
+                            <label htmlFor="scatter_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Point Color</label>
+                            <input id="scatter_color" type="color" value={pointColor} onChange={e => setPointColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+                        </div>
+                     </CollapsibleSection>
+                </div>
+                <div className="lg:col-span-2">
+                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                    <div className="h-96 w-full" ref={chartRef}>
+                        <ResponsiveContainer>
+                            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                <CartesianGrid stroke="var(--color-border)" />
+                                <XAxis type="number" dataKey="x" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
+                                <YAxis type="number" dataKey="y" name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
+                                <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                <Scatter name="Data Points" data={data} fill={pointColor} />
+                            </ScatterChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <ExportButton onClick={handleExport} />
                 </div>
             </div>
-            <ErrorDisplay error={error} />
-            <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
-            <div className="h-96 w-full mt-4" ref={chartRef}>
-                <ResponsiveContainer>
-                    <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                        <CartesianGrid stroke="var(--color-border)" />
-                        <XAxis type="number" dataKey="x" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
-                        <YAxis type="number" dataKey="y" name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
-                        <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                        <Scatter name="Data Points" data={data} fill={pointColor} />
-                    </ScatterChart>
-                </ResponsiveContainer>
-            </div>
-            <ExportButton onClick={handleExport} />
         </div>
     );
 };
 
 const BarChartCreator: React.FC = () => {
-    const LOCAL_STORAGE_KEY = 'graphing_barChart_settings';
-
-    const initialState = useMemo(() => {
-        const defaultState = {
-            dataStr: 'Mice, 25\nZebra, 42\nLion, 12\nElephant, 8',
-            title: 'Animal Population',
-            xLabel: 'Animal',
-            yLabel: 'Population',
-            barColor: '#48bb78',
-        };
-        try {
-            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-            return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
-        } catch (e) {
-            console.error("Failed to load BarChartCreator state:", e);
-            return defaultState;
-        }
-    }, []);
-    
-    const [dataStr, setDataStr] = useState(initialState.dataStr);
-    const [title, setTitle] = useState(initialState.title);
-    const [xLabel, setXLabel] = useState(initialState.xLabel);
-    const [yLabel, setYLabel] = useState(initialState.yLabel);
-    const [barColor, setBarColor] = useState(initialState.barColor);
+    const [dataStr, setDataStr] = useState('Mice, 25\nZebra, 42\nLion, 12\nElephant, 8');
+    const [title, setTitle] = useState('Animal Population');
+    const [xLabel, setXLabel] = useState('Animal');
+    const [yLabel, setYLabel] = useState('Population');
+    const [barColor, setBarColor] = useState('#48bb78');
+    const [enable3d, setEnable3d] = useState(true);
     const chartRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        try {
-            const stateToSave = { dataStr, title, xLabel, yLabel, barColor };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
-        } catch (e) {
-            console.error("Failed to save BarChartCreator state:", e);
-        }
-    }, [dataStr, title, xLabel, yLabel, barColor]);
     
     const { data, error } = useMemo(() => {
         if (!dataStr.trim()) return { data: [], error: "Please enter data." };
-        const points = [];
-        const lines = dataStr.split('\n');
-        for (let i = 0; i < lines.length; i++) {
-            const parts = lines[i].split(',');
-            if (parts.length !== 2) return { data: [], error: `Invalid format on line ${i + 1}. Use 'Label,Value'.` };
-            const name = parts[0].trim();
-            const value = parseFloat(parts[1]);
-            if (!name) return { data: [], error: `Missing label on line ${i+1}.` };
-            if (isNaN(value)) return { data: [], error: `Invalid number on line ${i + 1}.` };
-            points.push({ name, value });
-        }
-        return { data: points, error: null };
+        try {
+            const points = dataStr.split('\n').map((line, i) => {
+                const parts = line.split(',');
+                if (parts.length !== 2) throw new Error(`Invalid format on line ${i + 1}. Use 'Label,Value'.`);
+                const name = parts[0].trim();
+                const value = parseFloat(parts[1]);
+                if (!name) throw new Error(`Missing label on line ${i+1}.`);
+                if (isNaN(value)) throw new Error(`Invalid number on line ${i + 1}.`);
+                return { name, value };
+            });
+            return { data: points, error: null };
+        } catch (e: any) { return { data: [], error: e.message }; }
     }, [dataStr]);
 
     const handleExport = () => exportToPng(chartRef, `${title.replace(/\s+/g, '_') || 'bar-chart'}.png`);
 
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <Input id="bar_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
-                <TextArea id="bar_data" label="Data (Label,Value per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
-                <Input id="bar_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
-                <Input id="bar_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
-                 <div>
-                    <label htmlFor="bar_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Bar Color</label>
-                    <input id="bar_color" type="color" value={barColor} onChange={e => setBarColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1 space-y-4">
+                    <TextArea id="bar_data" label="Data (Label,Value per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
+                    <ErrorDisplay error={error} />
+                    <CollapsibleSection title="Customize Chart">
+                         <Input id="bar_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
+                         <Input id="bar_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
+                         <Input id="bar_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
+                         <div>
+                            <label htmlFor="bar_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Bar Color</label>
+                            <input id="bar_color" type="color" value={barColor} onChange={e => setBarColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+                        </div>
+                        <ToggleSwitch label="Enable 3D Effect" checked={enable3d} onChange={setEnable3d} />
+                    </CollapsibleSection>
+                </div>
+                <div className="lg:col-span-2">
+                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                    <div className="h-96 w-full" ref={chartRef}>
+                        <ResponsiveContainer>
+                            <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                <defs>
+                                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor={barColor} stopOpacity={0.9}/>
+                                        <stop offset="95%" stopColor={darkenColor(barColor, 20)} stopOpacity={1}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid stroke="var(--color-border)" />
+                                <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
+                                <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
+                                <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                <Legend />
+                                <Bar dataKey="value" fill={enable3d ? "url(#barGradient)" : barColor} name={yLabel} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <ExportButton onClick={handleExport} />
                 </div>
             </div>
-            <ErrorDisplay error={error} />
-            <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
-            <div className="h-96 w-full mt-4" ref={chartRef}>
-                <ResponsiveContainer>
-                    <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                        <CartesianGrid stroke="var(--color-border)" />
-                        <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" />
-                        <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" />
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                        <Legend />
-                        <Bar dataKey="value" fill={barColor} name={yLabel} />
-                    </BarChart>
-                </ResponsiveContainer>
+        </div>
+    );
+};
+
+const HistogramCreator: React.FC = () => {
+    const [dataStr, setDataStr] = useState('1,5,2,8,7,9,12,4,5,8,5,6,10,11');
+    const [numBins, setNumBins] = useState('5');
+    const [title, setTitle] = useState('Data Distribution');
+    const [xLabel, setXLabel] = useState('Value Bins');
+    const [yLabel, setYLabel] = useState('Frequency');
+    const [barColor, setBarColor] = useState('#ed8936');
+    const [enable3d, setEnable3d] = useState(true);
+    const chartRef = useRef<HTMLDivElement>(null);
+    
+    const { data, error } = useMemo(() => {
+        if (!dataStr.trim()) return { data: [], error: "Please enter data." };
+        const bins = parseInt(numBins);
+        if (isNaN(bins) || bins <= 0) return { data: [], error: "Number of bins must be a positive integer." };
+        
+        try {
+            const numbers = dataStr.split(/[\s,]+/).filter(Boolean).map(s => {
+                const num = parseFloat(s);
+                if (isNaN(num)) throw new Error(`'${s}' is not a valid number.`);
+                return num;
+            });
+            if (numbers.length < 2) return { data: [], error: "Please enter at least two numbers."};
+
+            const min = Math.min(...numbers);
+            const max = Math.max(...numbers);
+            if (min === max) return { data: [{ name: `${min}`, count: numbers.length }], error: null };
+
+            const binWidth = (max - min) / bins;
+            const histogramData = Array.from({ length: bins }, (_, i) => ({
+                name: `${(min + i * binWidth).toFixed(1)}-${(min + (i + 1) * binWidth).toFixed(1)}`,
+                count: 0
+            }));
+            
+            numbers.forEach(num => {
+                const binIndex = num === max ? bins - 1 : Math.floor((num - min) / binWidth);
+                if (histogramData[binIndex]) histogramData[binIndex].count++;
+            });
+            return { data: histogramData, error: null };
+        } catch (e: any) { return { data: [], error: e.message || "Invalid data format." }; }
+    }, [dataStr, numBins]);
+    
+    const handleExport = () => exportToPng(chartRef, `${title.replace(/\s+/g, '_') || 'histogram'}.png`);
+
+    return (
+        <div className="bg-brand-surface/50 p-6 rounded-lg">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                 <div className="lg:col-span-1 space-y-4">
+                     <TextArea id="hist_data" label="Data (comma or space-separated)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
+                     <Input id="hist_bins" label="Number of Bins" type="number" value={numBins} min="1" onChange={e => setNumBins(e.target.value)} />
+                     <ErrorDisplay error={error} />
+                     <CollapsibleSection title="Customize Chart">
+                         <Input id="hist_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
+                         <Input id="hist_xlabel" label="X-Axis Label" type="text" value={xLabel} onChange={e => setXLabel(e.target.value)} />
+                         <Input id="hist_ylabel" label="Y-Axis Label" type="text" value={yLabel} onChange={e => setYLabel(e.target.value)} />
+                         <div>
+                            <label htmlFor="hist_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Bar Color</label>
+                            <input id="hist_color" type="color" value={barColor} onChange={e => setBarColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
+                        </div>
+                        <ToggleSwitch label="Enable 3D Effect" checked={enable3d} onChange={setEnable3d} />
+                     </CollapsibleSection>
+                 </div>
+                 <div className="lg:col-span-2">
+                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                    <div className="h-96 w-full" ref={chartRef}>
+                        <ResponsiveContainer>
+                            <BarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }} barCategoryGap="0%">
+                                <defs>
+                                    <linearGradient id="histGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor={barColor} stopOpacity={0.9}/>
+                                        <stop offset="95%" stopColor={darkenColor(barColor, 20)} stopOpacity={1}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid stroke="var(--color-border)" />
+                                <XAxis dataKey="name" name={xLabel} label={{ value: xLabel, position: 'insideBottom', offset: -15 }} stroke="var(--color-text-secondary)" tick={{fontSize: 10}} />
+                                <YAxis name={yLabel} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} stroke="var(--color-text-secondary)" allowDecimals={false} />
+                                <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                <Legend />
+                                <Bar dataKey="count" fill={enable3d ? "url(#histGradient)" : barColor} name={yLabel} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <ExportButton onClick={handleExport} />
+                 </div>
             </div>
-            <ExportButton onClick={handleExport} />
         </div>
     );
 };
 
 const PieChartCreator: React.FC = () => {
-    const LOCAL_STORAGE_KEY = 'graphing_pieChart_settings';
-    
-    const initialState = useMemo(() => {
-        const defaultState = {
-            dataStr: 'Marketing, 50\nSales, 120\nDevelopment, 90\nSupport, 75',
-            title: 'Department Budget Allocation',
-        };
-        try {
-            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-            return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
-        } catch (e) {
-            console.error("Failed to load PieChartCreator state:", e);
-            return defaultState;
-        }
-    }, []);
-
-    const [dataStr, setDataStr] = useState(initialState.dataStr);
-    const [title, setTitle] = useState(initialState.title);
+    const [dataStr, setDataStr] = useState('Marketing, 50\nSales, 120\nDevelopment, 90\nSupport, 75');
+    const [title, setTitle] = useState('Department Budget Allocation');
+    const [enable3d, setEnable3d] = useState(true);
     const chartRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        try {
-            const stateToSave = { dataStr, title };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
-        } catch (e) {
-            console.error("Failed to save PieChartCreator state:", e);
-        }
-    }, [dataStr, title]);
 
     const { data, error } = useMemo(() => {
         if (!dataStr.trim()) return { data: [], error: "Please enter data." };
-        const parsedData = dataStr.split('\n').map((line, index) => {
-            const parts = line.split(',');
-            if (parts.length !== 2) return { error: `Invalid format on line ${index + 1}. Use 'Label,Value'.` };
-            const name = parts[0].trim();
-            const value = parseFloat(parts[1].trim());
-            if (!name) return { error: `Missing label on line ${index + 1}.` };
-            if (isNaN(value)) return { error: `Invalid number value for '${name}' on line ${index + 1}.` };
-            return { name, value };
-        });
-
-        const firstError = parsedData.find(d => 'error' in d);
-        if (firstError && 'error' in firstError) return { data: [], error: firstError.error };
-
-        return { data: parsedData as {name: string, value: number}[], error: null };
+        try {
+            const parsedData = dataStr.split('\n').map((line, index) => {
+                const parts = line.split(',');
+                if (parts.length !== 2) throw new Error(`Invalid format on line ${index + 1}. Use 'Label,Value'.`);
+                const name = parts[0].trim();
+                const value = parseFloat(parts[1].trim());
+                if (!name) throw new Error(`Missing label on line ${index + 1}.`);
+                if (isNaN(value)) throw new Error(`Invalid number on line ${index + 1}.`);
+                return { name, value };
+            });
+            return { data: parsedData, error: null };
+        } catch (e: any) { return { data: [], error: e.message }; }
     }, [dataStr]);
     
     const COLORS = ['#4299e1', '#ed8936', '#48bb78', '#9f7aea', '#f56565', '#4fd1c5'];
@@ -436,49 +480,50 @@ const PieChartCreator: React.FC = () => {
 
     return (
         <div className="bg-brand-surface/50 p-6 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <Input id="pie_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
-                <TextArea id="pie_data" label="Data (Label,Value per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1 space-y-4">
+                    <TextArea id="pie_data" label="Data (Label,Value per line)" value={dataStr} onChange={e => setDataStr(e.target.value)} />
+                     <ErrorDisplay error={error} />
+                     <CollapsibleSection title="Customize Chart">
+                        <Input id="pie_title" label="Chart Title" type="text" value={title} onChange={e => setTitle(e.target.value)} />
+                        <ToggleSwitch label="Enable 3D Effect" checked={enable3d} onChange={setEnable3d} />
+                     </CollapsibleSection>
+                </div>
+                <div className="lg:col-span-2">
+                    <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
+                    <div className={`h-96 w-full transition-transform ${enable3d ? '[filter:drop-shadow(0_10px_8px_rgba(0,0,0,0.3))]' : ''}`} ref={chartRef}>
+                        <ResponsiveContainer>
+                            <PieChart>
+                                <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
+                                    {data.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <ExportButton onClick={handleExport} />
+                </div>
             </div>
-            <ErrorDisplay error={error} />
-            <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
-            <div className="h-96 w-full" ref={chartRef}>
-                 <ResponsiveContainer>
-                    <PieChart>
-                        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
-                            {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
-                        <Legend />
-                    </PieChart>
-                 </ResponsiveContainer>
-             </div>
-             <ExportButton onClick={handleExport} />
         </div>
     );
 };
 
 // --- Main Graphing Component ---
 const Graph: React.FC = () => {
-    type ChartType = 'function' | 'scatter' | 'bar' | 'pie';
+    type ChartType = 'function' | 'scatter' | 'bar' | 'histogram' | 'pie';
     const [chartType, setChartType] = useState<ChartType>(() => {
         try {
-            const saved = localStorage.getItem('graphing_activeChartType');
-            return (saved as ChartType) || 'function';
-        } catch (e) {
-            console.error("Failed to load chart type from localStorage", e);
-            return 'function';
-        }
+            return (localStorage.getItem('graphing_activeChartType') as ChartType) || 'function';
+        } catch (e) { return 'function'; }
     });
 
     useEffect(() => {
         try {
             localStorage.setItem('graphing_activeChartType', chartType);
-        } catch (e) {
-            console.error("Failed to save chart type to localStorage", e);
-        }
+        } catch (e) { console.error("Failed to save chart type", e); }
     }, [chartType]);
     
     const renderChart = () => {
@@ -486,6 +531,7 @@ const Graph: React.FC = () => {
             case 'function': return <FunctionPlotter />;
             case 'scatter': return <ScatterPlotter />;
             case 'bar': return <BarChartCreator />;
+            case 'histogram': return <HistogramCreator />;
             case 'pie': return <PieChartCreator />;
             default: return null;
         }
@@ -498,6 +544,7 @@ const Graph: React.FC = () => {
                 <SubNavButton label="Function Plot" isActive={chartType === 'function'} onClick={() => setChartType('function')} />
                 <SubNavButton label="Scatter Plot" isActive={chartType === 'scatter'} onClick={() => setChartType('scatter')} />
                 <SubNavButton label="Bar Chart" isActive={chartType === 'bar'} onClick={() => setChartType('bar')} />
+                <SubNavButton label="Histogram" isActive={chartType === 'histogram'} onClick={() => setChartType('histogram')} />
                 <SubNavButton label="Pie Chart" isActive={chartType === 'pie'} onClick={() => setChartType('pie')} />
             </div>
             {renderChart()}

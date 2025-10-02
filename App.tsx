@@ -1,14 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from './components/common/Header';
 import Calculator from './components/Calculator';
 import History from './components/History';
 import Graph from './components/Graph';
-import Matrix from './components/Matrix';
-import Statistics from './components/Statistics';
-import EquationSolver from './components/EquationSolver';
+import MathTools from './components/MathTools';
 import { UnitConverter } from './components/UnitConverter';
 import CurrencyConverter from './components/CurrencyConverter';
-import PercentageCalculator from './components/PercentageCalculator';
 import BaseConverter from './components/BaseConverter';
 import FinancialCalculator from './components/FinancialCalculator';
 import DateCalculator from './components/DateCalculator';
@@ -74,18 +72,12 @@ const App: React.FC = () => {
         return <Calculator addToHistory={addToHistory} expressionToLoad={expressionToLoad} onExpressionLoaded={handleExpressionLoaded} />;
       case 'graphing':
         return <Graph />;
-      case 'matrix':
-        return <Matrix />;
-      case 'statistics':
-        return <Statistics />;
-      case 'equations':
-        return <EquationSolver />;
+      case 'math-tools':
+        return <MathTools />;
       case 'units':
         return <UnitConverter />;
       case 'currency':
         return <CurrencyConverter />;
-      case 'percentage':
-        return <PercentageCalculator />;
       case 'base':
         return <BaseConverter />;
       case 'financial':
