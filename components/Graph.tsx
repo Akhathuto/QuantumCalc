@@ -1,6 +1,8 @@
+
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, ScatterChart, Scatter, BarChart, Bar
 } from 'recharts';
 import { create, all } from 'mathjs';
@@ -160,7 +162,6 @@ const FunctionPlotter: React.FC = () => {
     const [xLabel, setXLabel] = useState('x');
     const [yLabel, setYLabel] = useState('f(x)');
     const [lineColor, setLineColor] = useState('#4299e1');
-    const [enable3d, setEnable3d] = useState(true);
     const chartRef = useRef<HTMLDivElement>(null);
 
     const { data, error } = useMemo(() => {
@@ -173,12 +174,22 @@ const FunctionPlotter: React.FC = () => {
         try {
             const node = math.parse(expression);
             const code = node.compile();
-            const points = Array.from({ length: 201 }, (_, i) => {
-                const x = min + (i * (max - min)) / 200;
-                const y = code.evaluate({ x });
-                return (typeof y === 'number' && isFinite(y)) ? { x: parseFloat(x.toPrecision(4)), y } : null;
-            }).filter(p => p !== null);
-            return { data: points as {x: number, y: number}[], error: null };
+            const points: {x: number, y: number}[] = [];
+            const step = (max - min) / 200;
+
+            for (let i = 0; i <= 200; i++) {
+                const x = min + i * step;
+                try {
+                    const y = code.evaluate({ x });
+                    if (typeof y === 'number' && isFinite(y)) {
+                        points.push({ x: parseFloat(x.toPrecision(4)), y });
+                    }
+                } catch (e) {
+                    // Ignore points where the function is undefined (e.g., log(-1))
+                    // This allows the rest of the graph to render.
+                }
+            }
+            return { data: points, error: null };
         } catch (e: any) {
              return { data: [], error: e.message || 'Invalid function.' };
         }
@@ -204,7 +215,6 @@ const FunctionPlotter: React.FC = () => {
                             <label htmlFor="line_color" className="block text-sm font-medium text-brand-text-secondary mb-1">Line Color</label>
                             <input id="line_color" type="color" value={lineColor} onChange={e => setLineColor(e.target.value)} className="w-full h-10 p-1 bg-gray-900/70 border-gray-600 rounded-md cursor-pointer" />
                         </div>
-                        <ToggleSwitch label="Enable 3D Effect" checked={enable3d} onChange={setEnable3d} />
                     </CollapsibleSection>
                 </div>
                 <div className="lg:col-span-2">
@@ -212,20 +222,14 @@ const FunctionPlotter: React.FC = () => {
                         <h3 className="text-xl font-bold text-center mb-2 min-h-[28px]">{title}</h3>
                         <div className="h-96 w-full">
                             <ResponsiveContainer>
-                                <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
-                                    <defs>
-                                        <linearGradient id="functionGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={lineColor} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={lineColor} stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
+                                <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                                     <XAxis type="number" dataKey="x" domain={['dataMin', 'dataMax']} stroke="var(--color-text-secondary)" label={{ value: xLabel, position: 'insideBottom', offset: -15 }}/>
                                     <YAxis stroke="var(--color-text-secondary)" label={{ value: yLabel, angle: -90, position: 'insideLeft' }}/>
                                     <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }} />
                                     <Legend />
-                                    <Area type="monotone" dataKey="y" stroke={lineColor} strokeWidth={2} fillOpacity={1} fill={enable3d ? "url(#functionGradient)" : "transparent"} name={`y = ${expression}`} />
-                                </AreaChart>
+                                    <Line type="monotone" dataKey="y" stroke={lineColor} strokeWidth={2} dot={false} name={`y = ${expression}`} />
+                                </LineChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
