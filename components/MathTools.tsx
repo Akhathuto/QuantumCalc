@@ -545,16 +545,10 @@ const EquationSolverTool = () => {
                 return;
             }
             
-            let details;
-            const originalConfig = math.config();
-            try {
-                // Temporary use 'number' for rationalize, as it has better parsing for polynomials
-                math.config({ number: 'number' });
-                details = math.rationalize(expressionToSolve, {}, true);
-            } finally {
-                // Ensure config is always restored, even if rationalize throws an error
-                math.config(originalConfig);
-            }
+            // Create a temporary math instance configured for standard numbers,
+            // as `rationalize` works best with this configuration.
+            const tempMath = create(all, { number: 'number' });
+            const details = tempMath.rationalize(expressionToSolve, {}, true);
 
             if (!details.coefficients) {
                  setError("Equation is not a recognized polynomial.");
@@ -761,7 +755,6 @@ const RatioCalculator = () => {
     useEffect(() => {
         const valA = parseFloat(a); const valB = parseFloat(b);
         const valC = parseFloat(c); const valD = parseFloat(d);
-        const inputs = [valA, valB, valC, valD];
         const emptyCount = [a,b,c,d].filter(v => v.trim() === '').length;
 
         if (emptyCount !== 1) return;
@@ -1176,20 +1169,19 @@ const FractionCalculator = () => {
     const [n1, setN1] = useState('1'); const [d1, setD1] = useState('2');
     const [n2, setN2] = useState('3'); const [d2, setD2] = useState('4');
     const [result, setResult] = useState('');
+    
+    const fractionMath = useMemo(() => create(all, { number: 'Fraction' }), []);
 
     const calculate = useCallback((op: 'add' | 'subtract' | 'multiply' | 'divide') => {
         try {
-            math.config({number: 'Fraction'});
-            const f1 = math.fraction(parseInt(n1), parseInt(d1));
-            const f2 = math.fraction(parseInt(n2), parseInt(d2));
-            const res = math[op](f1, f2);
+            const f1 = fractionMath.fraction(parseInt(n1), parseInt(d1));
+            const f2 = fractionMath.fraction(parseInt(n2), parseInt(d2));
+            const res = fractionMath[op](f1, f2);
             setResult(`${res.toString()} (Decimal: ${res.valueOf().toFixed(4)})`);
         } catch {
             setResult('Invalid fraction');
-        } finally {
-            math.config({number: 'BigNumber'}); // Reset config
         }
-    }, [n1, d1, n2, d2]);
+    }, [n1, d1, n2, d2, fractionMath]);
 
     useEffect(() => {
       calculate('add');
