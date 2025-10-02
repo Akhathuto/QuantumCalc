@@ -6,8 +6,7 @@ import Button from './common/Button';
 import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend } from 'recharts';
 
 
-const math = create(all);
-math.config({ number: 'BigNumber', precision: 64 }); // Use BigNumber for precision in some calcs
+const math = create(all, { number: 'BigNumber', precision: 64 });
 
 // --- Reusable UI ---
 const SubNavButton: React.FC<{ label: string; icon: React.ElementType; isActive: boolean; onClick: () => void }> = ({ label, icon: Icon, isActive, onClick }) => (
@@ -546,10 +545,16 @@ const EquationSolverTool = () => {
                 return;
             }
             
-            // Temporary use 'number' for rationalize, as it has better parsing for polynomials
-            math.config({ number: 'number' });
-            const details = math.rationalize(expressionToSolve, {}, true);
-            math.config({ number: 'BigNumber' }); // Revert back
+            let details;
+            const originalConfig = math.config();
+            try {
+                // Temporary use 'number' for rationalize, as it has better parsing for polynomials
+                math.config({ number: 'number' });
+                details = math.rationalize(expressionToSolve, {}, true);
+            } finally {
+                // Ensure config is always restored, even if rationalize throws an error
+                math.config(originalConfig);
+            }
 
             if (!details.coefficients) {
                  setError("Equation is not a recognized polynomial.");
